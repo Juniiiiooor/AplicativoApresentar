@@ -201,12 +201,24 @@ class AplicacaoQuiz(tk.Tk):
         self.spin_quantidade.set("5")
         self.spin_quantidade.grid(row=1, column=2, padx=(0, 12), sticky="w")
 
+        ttk.Label(config, text="Dificuldade").grid(row=0, column=3, sticky="w")
+        self.combo_dificuldade_partida = ttk.Combobox(
+            config,
+            values=["Todas"] + list(DIFICULDADES),
+            width=10,
+            state="readonly",
+        )
+        self.combo_dificuldade_partida.set("Todas")
+        self.combo_dificuldade_partida.grid(
+            row=1, column=3, padx=(0, 12), sticky="w"
+        )
+
         ttk.Button(
             config,
             text="Iniciar partida",
             style="Destaque.TButton",
             command=self._iniciar_partida,
-        ).grid(row=1, column=3, sticky="w")
+        ).grid(row=1, column=4, sticky="w")
 
         self.painel_pergunta = tk.Frame(
             self.aba_partida,
@@ -431,6 +443,9 @@ class AplicacaoQuiz(tk.Tk):
         categoria = self.combo_categoria.get()
         categoria = None if categoria in ("", "Todas") else categoria
 
+        dificuldade = self.combo_dificuldade_partida.get()
+        dificuldade = None if dificuldade in ("", "Todas") else dificuldade
+
         try:
             quantidade = int(self.spin_quantidade.get())
         except ValueError:
@@ -442,6 +457,7 @@ class AplicacaoQuiz(tk.Tk):
                 nome=nome,
                 quantidade=quantidade,
                 categoria=categoria,
+                dificuldade=dificuldade,
             )
         except ValueError as erro:
             messagebox.showerror("Não foi possível iniciar", str(erro))
@@ -452,7 +468,9 @@ class AplicacaoQuiz(tk.Tk):
     def _mostrar_pergunta(self) -> None:
         self._parar_timer()
         self.lbl_feedback.configure(text="")
-        self.btn_responder.configure(state="normal", text="Responder")
+        self.btn_responder.configure(
+            state="normal", text="Responder", command=self._responder
+        )
 
         if self.partida is None:
             return
@@ -538,11 +556,13 @@ class AplicacaoQuiz(tk.Tk):
 
         self._parar_timer()
 
+        pergunta_atual = self.partida.pergunta_atual()
         try:
             _, pergunta, resposta = self.service.responder(
                 partida_id=self.partida.id,
                 alternativa=alternativa,
                 tempo_restante=self.tempo_restante if alternativa != -1 else 0,
+                pergunta_id=pergunta_atual.id if pergunta_atual else None,
             )
         except (KeyError, ValueError) as erro:
             messagebox.showerror("Erro ao responder", str(erro))
@@ -561,6 +581,9 @@ class AplicacaoQuiz(tk.Tk):
             texto = f"❌ Errado! Resposta correta: {correta}"
             cor = COR_ERRO
 
+        if pergunta.explicacao:
+            texto = f"{texto}\n💡 {pergunta.explicacao}"
+
         self.lbl_feedback.configure(text=texto, fg=cor)
         self.lbl_progresso.configure(
             text=(
@@ -576,7 +599,12 @@ class AplicacaoQuiz(tk.Tk):
             )
             self._atualizar_ranking()
         else:
-            self.after(1600, self._proxima_pergunta)
+            # O apresentador controla quando avançar, para poder explicar.
+            self.btn_responder.configure(
+                text="Próxima pergunta →",
+                state="normal",
+                command=self._proxima_pergunta,
+            )
 
     def _proxima_pergunta(self) -> None:
         if self.partida is None or self.partida.status == "finalizada":
