@@ -125,6 +125,14 @@ py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r backend/requirements.txt
 
+# a partir da raiz do projeto
+python main.py
+```
+
+O `main.py` da raiz é um lançador: ele carrega a API de `backend/main.py` e
+sobe o servidor. Também funciona entrando na pasta `backend`:
+
+```powershell
 cd backend
 python main.py
 ```
@@ -358,8 +366,8 @@ manualmente (`workflow_dispatch`). Ele tem três jobs:
 ## 🛠️ Problemas comuns
 
 **A web mostra "Não foi possível carregar as categorias".**
-O backend não está rodando. Inicie o Flask na porta 8000 com
-`cd backend; python main.py`.
+O backend não está rodando. Na raiz do projeto, inicie o Flask na porta 8000
+com `python main.py` (ou `cd backend; python main.py`).
 
 **`ModuleNotFoundError: flask`.**
 O ambiente virtual não está ativado ou foi criado com outra versão do Python.

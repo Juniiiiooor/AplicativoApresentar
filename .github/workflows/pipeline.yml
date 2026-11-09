@@ -40,6 +40,10 @@ jobs:
         if: ${{ hashFiles('arcade/quiz_arcade.py') != '' }}
         run: python -m py_compile arcade/quiz_arcade.py
 
+      - name: Checar sintaxe do lançador da raiz
+        if: ${{ hashFiles('main.py') != '' }}
+        run: python -m py_compile main.py
+
   backend:
     name: API e testes (pytest)
     runs-on: ubuntu-latest
