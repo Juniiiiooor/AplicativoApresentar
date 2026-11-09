@@ -10,6 +10,7 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parent.parent
 TMP = Path(tempfile.mkdtemp(prefix="quiz-arena-test-"))
 shutil.copy(RAIZ / "data" / "perguntas.json", TMP / "perguntas.json")
+shutil.copy(RAIZ / "data" / "desafios.json", TMP / "desafios.json")
 os.environ["QUIZ_DATA_DIR"] = str(TMP)
 
 from main import app  # noqa: E402
@@ -177,3 +178,61 @@ def test_ranking() -> None:
     resposta = client.get("/api/ranking")
     assert resposta.status_code == 200
     assert isinstance(resposta.get_json(), list)
+
+
+def test_listar_desafios_nao_revela_resposta() -> None:
+    resposta = client.get("/api/desafios")
+    assert resposta.status_code == 200
+    desafios = resposta.get_json()
+    assert len(desafios) >= 1
+    assert all("correta" not in desafio for desafio in desafios)
+    assert all("explicacao" not in desafio for desafio in desafios)
+
+
+def test_responder_desafio() -> None:
+    desafios = client.get("/api/desafios").get_json()
+    alvo = desafios[0]
+
+    resposta = client.post(
+        f"/api/desafios/{alvo['id']}/responder",
+        json={"alternativa": 0},
+    )
+    assert resposta.status_code == 200
+    corpo = resposta.get_json()
+    assert "correta" in corpo
+    assert "alternativa_correta" in corpo
+    assert "explicacao" in corpo
+
+
+def test_responder_desafio_inexistente_retorna_404() -> None:
+    resposta = client.post(
+        "/api/desafios/nao-existe/responder",
+        json={"alternativa": 0},
+    )
+    assert resposta.status_code == 404
+
+
+def test_responder_desafio_com_alternativa_invalida() -> None:
+    desafios = client.get("/api/desafios").get_json()
+    alvo = desafios[0]
+    resposta = client.post(
+        f"/api/desafios/{alvo['id']}/responder",
+        json={"alternativa": 99},
+    )
+    assert resposta.status_code == 400
+
+
+def test_criar_desafio() -> None:
+    payload = {
+        "titulo": "Desafio de teste",
+        "linguagem": "Python",
+        "tema": "POO",
+        "codigo": "class X:\n    pass",
+        "descricao": "Qual é o problema deste código?",
+        "alternativas": ["Falta corpo", "Falta import"],
+        "correta": 0,
+        "explicacao": "A classe precisa de um corpo; use pass.",
+    }
+    resposta = client.post("/api/desafios", json=payload)
+    assert resposta.status_code == 201
+    assert resposta.get_json()["titulo"] == payload["titulo"]

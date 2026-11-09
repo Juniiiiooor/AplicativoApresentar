@@ -12,7 +12,7 @@ import threading
 from pathlib import Path
 from typing import Any
 
-from .models import Jogador, Pergunta
+from .models import Desafio, Jogador, Pergunta
 
 RAIZ_PROJETO = Path(__file__).resolve().parent.parent
 DIR_DADOS_PADRAO = RAIZ_PROJETO / "data"
@@ -25,15 +25,19 @@ class RepositorioJSON:
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
         self.arquivo_perguntas = self.data_dir / "perguntas.json"
+        self.arquivo_desafios = self.data_dir / "desafios.json"
         self.arquivo_ranking = self.data_dir / "ranking.json"
         self._lock = threading.Lock()
         self._garantir_arquivos()
 
     def _garantir_arquivos(self) -> None:
-        if not self.arquivo_perguntas.exists():
-            self.arquivo_perguntas.write_text("[]", encoding="utf-8")
-        if not self.arquivo_ranking.exists():
-            self.arquivo_ranking.write_text("[]", encoding="utf-8")
+        for arquivo in (
+            self.arquivo_perguntas,
+            self.arquivo_desafios,
+            self.arquivo_ranking,
+        ):
+            if not arquivo.exists():
+                arquivo.write_text("[]", encoding="utf-8")
 
     def _ler(self, caminho: Path, padrao: Any) -> Any:
         try:
@@ -68,6 +72,26 @@ class RepositorioJSON:
             perguntas.append(pergunta)
             self.salvar_perguntas(perguntas)
             return pergunta
+
+    # ------------------------------ Desafios -----------------------------
+    def carregar_desafios(self) -> list[Desafio]:
+        dados = self._ler(self.arquivo_desafios, [])
+        return [Desafio.de_dict(item) for item in dados if isinstance(item, dict)]
+
+    def salvar_desafios(self, desafios: list[Desafio]) -> None:
+        self._escrever(
+            self.arquivo_desafios,
+            [desafio.para_dict() for desafio in desafios],
+        )
+
+    def adicionar_desafio(self, desafio: Desafio) -> Desafio:
+        with self._lock:
+            desafios = self.carregar_desafios()
+            if any(item.id == desafio.id for item in desafios):
+                raise ValueError("Já existe um desafio com esse id.")
+            desafios.append(desafio)
+            self.salvar_desafios(desafios)
+            return desafio
 
     # ------------------------------ Ranking ------------------------------
     def carregar_ranking(self) -> list[dict[str, Any]]:

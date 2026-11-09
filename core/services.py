@@ -8,7 +8,7 @@ from __future__ import annotations
 import random
 from typing import Any
 
-from .models import Jogador, Partida, Pergunta
+from .models import Desafio, Jogador, Partida, Pergunta
 from .storage import RepositorioJSON
 
 MAX_PARTIDAS_EM_MEMORIA = 200
@@ -41,6 +41,38 @@ class QuizService:
     def criar_pergunta(self, dados: dict[str, Any] | Pergunta) -> Pergunta:
         pergunta = dados if isinstance(dados, Pergunta) else Pergunta.de_dict(dados)
         return self.repo.adicionar_pergunta(pergunta)
+
+    # ------------------------------ Desafios -----------------------------
+    def listar_desafios(
+        self,
+        publico: bool = True,
+    ) -> list[dict[str, Any]] | list[Desafio]:
+        desafios = self.repo.carregar_desafios()
+        if publico:
+            return [desafio.para_publico() for desafio in desafios]
+        return desafios
+
+    def criar_desafio(self, dados: dict[str, Any] | Desafio) -> Desafio:
+        desafio = dados if isinstance(dados, Desafio) else Desafio.de_dict(dados)
+        return self.repo.adicionar_desafio(desafio)
+
+    def obter_desafio(self, desafio_id: str) -> Desafio:
+        for desafio in self.repo.carregar_desafios():
+            if desafio.id == desafio_id:
+                return desafio
+        raise KeyError("Desafio não encontrado.")
+
+    def responder_desafio(
+        self,
+        desafio_id: str,
+        alternativa: int,
+    ) -> tuple[Desafio, bool, int]:
+        desafio = self.obter_desafio(desafio_id)
+        if not 0 <= alternativa < len(desafio.alternativas):
+            raise ValueError("Alternativa inválida.")
+
+        correta = desafio.esta_correta(alternativa)
+        return desafio, correta, desafio.pontos(alternativa)
 
     # ------------------------------ Partidas -----------------------------
     def iniciar_partida(

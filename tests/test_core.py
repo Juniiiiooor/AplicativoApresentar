@@ -17,7 +17,7 @@ RAIZ = Path(__file__).resolve().parent.parent
 if str(RAIZ) not in sys.path:
     sys.path.insert(0, str(RAIZ))
 
-from core.models import ConflitoDeResposta, Jogador, Partida, Pergunta
+from core.models import ConflitoDeResposta, Desafio, Jogador, Partida, Pergunta
 from core.services import QuizService
 from core.storage import RepositorioJSON
 
@@ -102,6 +102,76 @@ class TestPergunta(unittest.TestCase):
             Pergunta.de_dict(pergunta.para_dict()).explicacao,
             "Porque sim.",
         )
+
+
+def criar_desafio(correta: int = 0) -> Desafio:
+    return Desafio(
+        id="bug-teste",
+        titulo="Bug de teste",
+        linguagem="Python",
+        tema="POO",
+        codigo="class Aluno:\n    def __init__(self, nome):\n        nome = nome",
+        descricao="Qual é a correção do código?",
+        alternativas=["self.nome = nome", "self.nome == nome"],
+        correta=correta,
+        explicacao="Use self para guardar o atributo.",
+    )
+
+
+class TestDesafio(unittest.TestCase):
+    def test_cria_desafio_valido(self) -> None:
+        desafio = criar_desafio()
+        self.assertEqual(desafio.titulo, "Bug de teste")
+        self.assertEqual(len(desafio.alternativas), 2)
+
+    def test_rejeita_titulo_curto(self) -> None:
+        with self.assertRaises(ValueError):
+            Desafio(
+                id="x",
+                titulo="Oi",
+                linguagem="Python",
+                tema="POO",
+                codigo="print(1)",
+                descricao="Descrição válida",
+                alternativas=["A", "B"],
+                correta=0,
+            )
+
+    def test_rejeita_codigo_vazio(self) -> None:
+        with self.assertRaises(ValueError):
+            Desafio(
+                id="x",
+                titulo="Título válido",
+                linguagem="Python",
+                tema="POO",
+                codigo="   ",
+                descricao="Descrição válida",
+                alternativas=["A", "B"],
+                correta=0,
+            )
+
+    def test_rejeita_indice_invalido(self) -> None:
+        with self.assertRaises(ValueError):
+            criar_desafio(correta=5)
+
+    def test_pontuacao_do_desafio(self) -> None:
+        desafio = criar_desafio()
+        self.assertEqual(desafio.pontos(0), 10)
+        self.assertEqual(desafio.pontos(1), 0)
+
+    def test_para_publico_nao_expoe_a_correta(self) -> None:
+        dados = criar_desafio().para_publico()
+        self.assertNotIn("correta", dados)
+        self.assertNotIn("explicacao", dados)
+        self.assertEqual(
+            criar_desafio().para_publico(revelar=True)["correta"],
+            0,
+        )
+
+    def test_serializacao_ida_e_volta(self) -> None:
+        original = criar_desafio()
+        copia = Desafio.de_dict(original.para_dict())
+        self.assertEqual(copia.para_dict(), original.para_dict())
 
 
 class TestJogador(unittest.TestCase):
@@ -229,6 +299,7 @@ class BaseComRepositorio(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = Path(tempfile.mkdtemp(prefix="quiz-core-"))
         shutil.copy(RAIZ / "data" / "perguntas.json", self.tmp / "perguntas.json")
+        shutil.copy(RAIZ / "data" / "desafios.json", self.tmp / "desafios.json")
         self.repo = RepositorioJSON(self.tmp)
         self.service = QuizService(self.repo)
 
@@ -245,6 +316,17 @@ class TestRepositorio(BaseComRepositorio):
         self.repo.adicionar_pergunta(pergunta)
         with self.assertRaises(ValueError):
             self.repo.adicionar_pergunta(pergunta)
+
+    def test_carrega_desafios_do_json(self) -> None:
+        desafios = self.repo.carregar_desafios()
+        self.assertGreaterEqual(len(desafios), 1)
+        self.assertTrue(all(desafio.alternativas for desafio in desafios))
+
+    def test_adicionar_desafio_e_rejeitar_id_duplicado(self) -> None:
+        desafio = criar_desafio()
+        self.repo.adicionar_desafio(desafio)
+        with self.assertRaises(ValueError):
+            self.repo.adicionar_desafio(desafio)
 
     def test_ranking_ordenado_por_pontuacao(self) -> None:
         menor = Jogador(nome="Menor")
@@ -311,6 +393,26 @@ class TestServico(BaseComRepositorio):
     def test_partida_inexistente(self) -> None:
         with self.assertRaises(KeyError):
             self.service.obter_partida("nao-existe")
+
+    def test_listar_desafios_publicos(self) -> None:
+        desafios = self.service.listar_desafios()
+        self.assertGreaterEqual(len(desafios), 1)
+        self.assertTrue(all("correta" not in item for item in desafios))
+
+    def test_responder_desafio(self) -> None:
+        alvo = self.service.listar_desafios()[0]
+        _, correta, pontos = self.service.responder_desafio(alvo["id"], 0)
+        self.assertIsInstance(correta, bool)
+        self.assertGreaterEqual(pontos, 0)
+
+    def test_responder_desafio_inexistente(self) -> None:
+        with self.assertRaises(KeyError):
+            self.service.responder_desafio("nao-existe", 0)
+
+    def test_responder_desafio_com_alternativa_invalida(self) -> None:
+        alvo = self.service.listar_desafios()[0]
+        with self.assertRaises(ValueError):
+            self.service.responder_desafio(alvo["id"], 99)
 
 
 if __name__ == "__main__":

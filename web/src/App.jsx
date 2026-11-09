@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import Home from "./components/Home";
+import ConfigurarQuiz from "./components/ConfigurarQuiz";
 import Quiz from "./components/Quiz";
 import Resultado from "./components/Resultado";
 import Ranking from "./components/Ranking";
+import CacaBug from "./components/CacaBug";
 import { api } from "./lib/api";
 
 const CHAVE_PARTIDA = "quiz-arena:partida";
@@ -130,11 +132,23 @@ export default function App() {
 
         {!retomando && tela === "home" && (
           <Home
+            onJogarQuiz={() => setTela("configurar")}
+            onCacaBug={() => setTela("cacabug")}
+            onVerRanking={() => setTela("ranking")}
+          />
+        )}
+
+        {!retomando && tela === "configurar" && (
+          <ConfigurarQuiz
             categorias={categorias}
             carregando={carregando}
             onIniciar={iniciarPartida}
-            onVerRanking={() => setTela("ranking")}
+            onVoltar={voltarAoInicio}
           />
+        )}
+
+        {!retomando && tela === "cacabug" && (
+          <CacaBug onVoltar={voltarAoInicio} />
         )}
 
         {!retomando && tela === "quiz" && partida && (

@@ -8,9 +8,13 @@ O jogo tem três partes que compartilham o mesmo núcleo de regras:
 
 - **Painel desktop (Tkinter)** — o apresentador inicia partidas, vê o tempo,
   responde as perguntas, controla o avanço e cadastra novas perguntas.
-- **API (Flask)** — expõe perguntas, partidas e ranking em JSON.
-- **Web (React)** — o jogador entra com o nome, escolhe categoria, quantidade e
-  dificuldade, responde contra o tempo e vê a revisão e o ranking.
+- **API (Flask)** — expõe perguntas, partidas, desafios e ranking em JSON.
+- **Web (React)** — a Home funciona como um **menu de cards**: o jogador escolhe
+  entre o **Quiz relâmpago**, o **Caça ao Bug** e o **Ranking**.
+
+O **Caça ao Bug** é o segundo modo de jogo: aparece um trecho de código com um
+erro e o jogador escolhe qual correção resolve o problema. Cada desafio vale 10
+pontos e mostra uma explicação depois da resposta.
 
 ---
 
@@ -18,8 +22,10 @@ O jogo tem três partes que compartilham o mesmo núcleo de regras:
 
 - [x] Regras de domínio em POO (`Pergunta`, `Jogador`, `Partida`, `Resposta`)
 - [x] Pontuação por dificuldade + bônus de tempo
-- [x] Persistência em JSON (`data/perguntas.json` e `data/ranking.json`)
+- [x] Persistência em JSON (`data/perguntas.json`, `data/desafios.json` e `data/ranking.json`)
 - [x] 20 perguntas iniciais sobre o conteúdo das aulas
+- [x] **Caça ao Bug**: 12 desafios de código com correção e explicação
+- [x] Home com menu de cards separando Quiz, Caça ao Bug e Ranking
 - [x] API Flask com documentação simples em `/docs`
 - [x] Tempo calculado no **servidor** (o cliente não consegue inflar o bônus)
 - [x] Resposta idempotente com `pergunta_id` (reenvio não pula pergunta)
@@ -32,7 +38,7 @@ O jogo tem três partes que compartilham o mesmo núcleo de regras:
 - [x] Testes do núcleo com `unittest` (sem dependências externas)
 - [x] Testes da API com `pytest` + cliente de testes do Flask
 - [x] Painel Tkinter com abas **Partida** e **Perguntas**
-- [x] Interface React com Home, Quiz, Resultado e Ranking
+- [x] Interface React com Home (cards), Quiz, Resultado, Ranking e Caça ao Bug
 - [x] Pipeline de CI em `.github/workflows/pipeline.yml`
 
 ---
@@ -71,6 +77,7 @@ quiz-arena/
 │   ├── services.py
 │   └── storage.py
 ├── data/
+│   ├── desafios.json
 │   ├── perguntas.json
 │   └── ranking.example.json
 ├── desktop/
@@ -91,6 +98,8 @@ quiz-arena/
 │       ├── index.css
 │       ├── main.jsx
 │       ├── components/
+│       │   ├── CacaBug.jsx
+│       │   ├── ConfigurarQuiz.jsx
 │       │   ├── Home.jsx
 │       │   ├── Quiz.jsx
 │       │   ├── Ranking.jsx
@@ -204,6 +213,9 @@ pytest -q
 | `GET` | `/api/categorias` | Lista as categorias disponíveis |
 | `GET` | `/api/perguntas` | Lista perguntas (sem revelar a correta) |
 | `POST` | `/api/perguntas` | Cadastra uma pergunta |
+| `GET` | `/api/desafios` | Lista os desafios do Caça ao Bug (sem a correção) |
+| `POST` | `/api/desafios` | Cadastra um desafio |
+| `POST` | `/api/desafios/{id}/responder` | Corrige uma resposta do Caça ao Bug |
 | `POST` | `/api/partidas` | Inicia uma partida |
 | `GET` | `/api/partidas/{id}` | Consulta o estado da partida |
 | `POST` | `/api/partidas/{id}/responder` | Responde a pergunta atual |
@@ -246,6 +258,30 @@ Para cadastrar uma pergunta com explicação:
   "dificuldade": "facil",
   "tempo_limite": 20,
   "explicacao": "A palavra-chave class inicia a definição de uma classe."
+}
+```
+
+Para responder um desafio do Caça ao Bug:
+
+```json
+{
+  "alternativa": 0
+}
+```
+
+A resposta devolve `correta`, `alternativa_correta`, `pontos` (10 quando acerta)
+e a `explicacao`. Para cadastrar um desafio novo:
+
+```json
+{
+  "titulo": "Atributo que não fica no objeto",
+  "linguagem": "Python",
+  "tema": "POO",
+  "codigo": "class Aluno:\n    def __init__(self, nome):\n        nome = nome",
+  "descricao": "O nome não fica salvo no objeto. Qual linha corrige?",
+  "alternativas": ["self.nome = nome", "self.nome == nome"],
+  "correta": 0,
+  "explicacao": "Atributos de instância usam self."
 }
 ```
 
@@ -311,6 +347,7 @@ manualmente (`workflow_dispatch`). Ele tem três jobs:
 - [x] Pipeline de CI
 - [x] Tempo no servidor, idempotência, ranking agregado e revisão
 - [x] Modo arcade com Pygame
+- [x] Caça ao Bug com desafios de código e menu de cards
 - [ ] Partidas multiplayer em tempo real (WebSocket)
 - [ ] Migrar persistência de JSON para SQLite
 - [ ] Deploy do backend e do front-end
