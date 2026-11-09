@@ -2,15 +2,15 @@
 
 Aplicação de quiz criada como projeto em grupo para reunir, na prática, tudo o
 que foi visto nas aulas: **Python com POO**, **Tkinter**, **Pygame**, **HTML/CSS/JS**,
-**React + Vite + Tailwind**, **FastAPI**, **pytest/unittest** e **Git/GitHub**.
+**React + Vite + Tailwind**, **Flask**, **pytest/unittest** e **Git/GitHub**.
 
 O jogo tem três partes que compartilham o mesmo núcleo de regras:
 
 - **Painel desktop (Tkinter)** — o apresentador inicia partidas, vê o tempo,
-  responde as perguntas e cadastra novas perguntas.
-- **API (FastAPI)** — expõe perguntas, partidas e ranking em JSON.
-- **Web (React)** — o jogador entra com o nome, escolhe categoria e quantidade,
-  responde contra o tempo e vê o ranking.
+  responde as perguntas, controla o avanço e cadastra novas perguntas.
+- **API (Flask)** — expõe perguntas, partidas e ranking em JSON.
+- **Web (React)** — o jogador entra com o nome, escolhe categoria, quantidade e
+  dificuldade, responde contra o tempo e vê a revisão e o ranking.
 
 ---
 
@@ -20,9 +20,17 @@ O jogo tem três partes que compartilham o mesmo núcleo de regras:
 - [x] Pontuação por dificuldade + bônus de tempo
 - [x] Persistência em JSON (`data/perguntas.json` e `data/ranking.json`)
 - [x] 20 perguntas iniciais sobre o conteúdo das aulas
-- [x] API FastAPI com documentação automática em `/docs`
+- [x] API Flask com documentação simples em `/docs`
+- [x] Tempo calculado no **servidor** (o cliente não consegue inflar o bônus)
+- [x] Resposta idempotente com `pergunta_id` (reenvio não pula pergunta)
+- [x] Ranking agregado por jogador (melhor partida, sem nomes duplicados)
+- [x] Explicação da resposta e revisão final
+- [x] Filtro por categoria e por dificuldade
+- [x] Retomada de partida após atualizar a página (`localStorage`)
+- [x] Atalhos de teclado A–D / 1–4 e feedback acessível (`aria-live`)
+- [x] **Modo arcade com Pygame** usando as mesmas perguntas do núcleo
 - [x] Testes do núcleo com `unittest` (sem dependências externas)
-- [x] Testes da API com `pytest` + `TestClient`
+- [x] Testes da API com `pytest` + cliente de testes do Flask
 - [x] Painel Tkinter com abas **Partida** e **Perguntas**
 - [x] Interface React com Home, Quiz, Resultado e Ranking
 - [x] Pipeline de CI em `.github/workflows/pipeline.yml`
@@ -33,10 +41,11 @@ O jogo tem três partes que compartilham o mesmo núcleo de regras:
 
 | Camada | Tecnologia |
 | --- | --- |
-| Regras e persistência | Python 3.11+ (dataclasses, JSON) |
-| API | FastAPI + Pydantic + Uvicorn |
+| Regras e persistência | Python 3.11+ (dataclasses, JSON, `threading.Lock`) |
+| API | Flask 3 |
 | Testes | unittest (núcleo) e pytest (API) |
 | Desktop | Tkinter |
+| Arcade | Pygame |
 | Web | React 18 + Vite + Tailwind CSS |
 | CI | GitHub Actions |
 
@@ -49,8 +58,11 @@ quiz-arena/
 ├── .github/
 │   └── workflows/
 │       └── pipeline.yml
+├── arcade/
+│   ├── quiz_arcade.py     # modo arcade com Pygame
+│   └── requirements.txt
 ├── backend/
-│   ├── main.py
+│   ├── main.py            # app Flask
 │   ├── requirements.txt
 │   └── test_main.py
 ├── core/
@@ -63,6 +75,8 @@ quiz-arena/
 │   └── ranking.example.json
 ├── desktop/
 │   └── painel.py
+├── docs/
+│   └── aprendizados.md
 ├── tests/
 │   ├── __init__.py
 │   └── test_core.py
@@ -93,7 +107,7 @@ quiz-arena/
 
 > Todos os comandos abaixo partem da pasta `quiz-arena`.
 
-### 1. Backend (FastAPI)
+### 1. Backend (Flask)
 
 No Windows, use Python 3.11 ou 3.13 (o Python 3.15 pode não ter as dependências):
 
@@ -103,12 +117,28 @@ py -3.11 -m venv .venv
 pip install -r backend/requirements.txt
 
 cd backend
-uvicorn main:app --reload --port 8000
+python main.py
+```
+
+Alternativa com o comando do Flask:
+
+```powershell
+cd backend
+flask --app main run --debug --port 8000
 ```
 
 - API: <http://localhost:8000>
-- Documentação interativa: <http://localhost:8000/docs>
+- Documentação simples: <http://localhost:8000/docs>
 - Health check: <http://localhost:8000/health>
+
+Variáveis opcionais:
+
+| Variável | Efeito |
+| --- | --- |
+| `QUIZ_ADMIN_TOKEN` | Exige o cabeçalho `X-Admin-Token` no `POST /api/perguntas` |
+| `QUIZ_CORS_ORIGINS` | Origens permitidas, separadas por vírgula (padrão: `localhost:5173`) |
+| `QUIZ_DATA_DIR` | Pasta alternativa para `perguntas.json` e `ranking.json` |
+| `PORT` | Porta do servidor Flask (padrão: `8000`) |
 
 ### 2. Web (React + Vite)
 
@@ -138,7 +168,17 @@ python desktop/painel.py
 
 No Linux, se o Tkinter não estiver instalado: `sudo apt install python3-tk`.
 
-### 4. Testes
+### 4. Modo arcade (Pygame)
+
+```powershell
+pip install -r arcade/requirements.txt
+python arcade/quiz_arcade.py
+```
+
+Controles: **1–4** ou **A–D** para responder, **Enter/Espaço** para avançar,
+**R** para reiniciar e **Esc** para sair.
+
+### 5. Testes
 
 Núcleo (somente biblioteca padrão):
 
@@ -160,13 +200,14 @@ pytest -q
 | Método | Rota | Descrição |
 | --- | --- | --- |
 | `GET` | `/health` | Verifica se a API está no ar |
+| `GET` | `/docs` | Página simples com as rotas |
 | `GET` | `/api/categorias` | Lista as categorias disponíveis |
 | `GET` | `/api/perguntas` | Lista perguntas (sem revelar a correta) |
 | `POST` | `/api/perguntas` | Cadastra uma pergunta |
 | `POST` | `/api/partidas` | Inicia uma partida |
 | `GET` | `/api/partidas/{id}` | Consulta o estado da partida |
 | `POST` | `/api/partidas/{id}/responder` | Responde a pergunta atual |
-| `GET` | `/api/ranking?limite=10` | Retorna o ranking |
+| `GET` | `/api/ranking?limite=10` | Retorna o ranking agregado por jogador |
 
 Exemplo de partida:
 
@@ -174,12 +215,45 @@ Exemplo de partida:
 {
   "nome": "Ana",
   "categoria": "Python",
-  "quantidade": 5
+  "quantidade": 5,
+  "dificuldade": "medio"
 }
 ```
 
-Para responder, envie `{"alternativa": 2, "tempo_restante": 12}`. Use
-`alternativa: -1` quando o tempo esgotar.
+Para responder, envie:
+
+```json
+{
+  "alternativa": 2,
+  "tempo_restante": 12,
+  "pergunta_id": "q07"
+}
+```
+
+Use `alternativa: -1` quando o tempo esgotar. O `tempo_restante` é apenas
+informativo: o servidor recalcula o tempo para impedir fraude. Se o
+`pergunta_id` não for o da pergunta atual, a API responde **409** em vez de
+avançar duas perguntas.
+
+Para cadastrar uma pergunta com explicação:
+
+```json
+{
+  "enunciado": "Qual palavra-chave cria uma classe em Python?",
+  "alternativas": ["def", "class", "object", "new"],
+  "correta": 1,
+  "categoria": "Python",
+  "dificuldade": "facil",
+  "tempo_limite": 20,
+  "explicacao": "A palavra-chave class inicia a definição de uma classe."
+}
+```
+
+Se `QUIZ_ADMIN_TOKEN` estiver definido, inclua o cabeçalho:
+
+```text
+X-Admin-Token: seu-token
+```
 
 ---
 
@@ -214,9 +288,6 @@ manualmente (`workflow_dispatch`). Ele tem três jobs:
 - **backend** — instala `backend/requirements.txt` e roda `pytest`.
 - **web** — instala as dependências e roda `npm run build`.
 
-Não é necessário `package-lock.json` para o CI funcionar; o `npm install` é
-executado direto.
-
 ---
 
 ## 👥 Divisão sugerida (4 a 5 pessoas)
@@ -234,11 +305,12 @@ executado direto.
 ## 🗺️ Roadmap
 
 - [x] Estrutura inicial e regras do jogo
-- [x] API REST com FastAPI
+- [x] API REST com Flask
 - [x] Painel Tkinter
 - [x] Front-end React
 - [x] Pipeline de CI
-- [ ] Modo arcade com Pygame
+- [x] Tempo no servidor, idempotência, ranking agregado e revisão
+- [x] Modo arcade com Pygame
 - [ ] Partidas multiplayer em tempo real (WebSocket)
 - [ ] Migrar persistência de JSON para SQLite
 - [ ] Deploy do backend e do front-end
@@ -249,16 +321,19 @@ executado direto.
 ## 🛠️ Problemas comuns
 
 **A web mostra "Não foi possível carregar as categorias".**
-O backend não está rodando. Inicie o Uvicorn na porta 8000.
+O backend não está rodando. Inicie o Flask na porta 8000 com
+`cd backend; python main.py`.
 
-**`ModuleNotFoundError: fastapi`.**
+**`ModuleNotFoundError: flask`.**
 O ambiente virtual não está ativado ou foi criado com outra versão do Python.
 Use `py -3.11 -m venv .venv` e ative antes de instalar.
 
 **Porta 8000 ou 5173 ocupada.**
 
 ```powershell
-uvicorn main:app --reload --port 8001
+cd backend
+$env:PORT = "8001"
+python main.py
 ```
 
 Nesse caso, ajuste o proxy em `web/vite.config.js`.
