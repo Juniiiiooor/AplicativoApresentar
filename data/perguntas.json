@@ -1,0 +1,217 @@
+[
+  {
+    "id": "q01",
+    "enunciado": "O que significa a sigla HTTP?",
+    "alternativas": [
+      "Home Tool Transfer Protocol",
+      "HyperText Transfer Protocol",
+      "High Tech Transfer Process",
+      "Hyperlink Text Protocol"
+    ],
+    "correta": 1,
+    "categoria": "Web",
+    "dificuldade": "facil",
+    "tempo_limite": 20
+  },
+  {
+    "id": "q02",
+    "enunciado": "Qual método HTTP é usado para buscar informações?",
+    "alternativas": ["POST", "DELETE", "GET", "PUT"],
+    "correta": 2,
+    "categoria": "Web",
+    "dificuldade": "facil",
+    "tempo_limite": 20
+  },
+  {
+    "id": "q03",
+    "enunciado": "Qual código de status indica que o recurso não foi encontrado?",
+    "alternativas": ["404", "200", "301", "500"],
+    "correta": 0,
+    "categoria": "Web",
+    "dificuldade": "facil",
+    "tempo_limite": 20
+  },
+  {
+    "id": "q04",
+    "enunciado": "Para que serve o arquivo .htaccess?",
+    "alternativas": [
+      "Criar bancos de dados",
+      "Compilar React",
+      "Instalar Python",
+      "Configurar o servidor Apache"
+    ],
+    "correta": 3,
+    "categoria": "Web",
+    "dificuldade": "medio",
+    "tempo_limite": 25
+  },
+  {
+    "id": "q05",
+    "enunciado": "Qual palavra-chave cria uma classe em Python?",
+    "alternativas": ["def", "class", "object", "new"],
+    "correta": 1,
+    "categoria": "Python",
+    "dificuldade": "facil",
+    "tempo_limite": 20
+  },
+  {
+    "id": "q06",
+    "enunciado": "O método __init__ é usado para...",
+    "alternativas": [
+      "Inicializar o objeto",
+      "Excluir o objeto",
+      "Importar módulos",
+      "Criar uma lista"
+    ],
+    "correta": 0,
+    "categoria": "POO",
+    "dificuldade": "facil",
+    "tempo_limite": 20
+  },
+  {
+    "id": "q07",
+    "enunciado": "Qual pilar da POO esconde os detalhes internos da classe?",
+    "alternativas": ["Herança", "Polimorfismo", "Encapsulamento", "Abstração"],
+    "correta": 2,
+    "categoria": "POO",
+    "dificuldade": "medio",
+    "tempo_limite": 25
+  },
+  {
+    "id": "q08",
+    "enunciado": "Qual biblioteca padrão usamos para criar interfaces gráficas?",
+    "alternativas": ["Pygame", "FastAPI", "Pandas", "Tkinter"],
+    "correta": 3,
+    "categoria": "Python",
+    "dificuldade": "facil",
+    "tempo_limite": 20
+  },
+  {
+    "id": "q09",
+    "enunciado": "Qual framework usamos para criar a API do e-commerce?",
+    "alternativas": ["FastAPI", "Django", "Flask", "Tkinter"],
+    "correta": 0,
+    "categoria": "Backend",
+    "dificuldade": "medio",
+    "tempo_limite": 25
+  },
+  {
+    "id": "q10",
+    "enunciado": "Qual hook guarda estado em um componente React?",
+    "alternativas": ["useEffect", "useState", "useMemo", "useRef"],
+    "correta": 1,
+    "categoria": "React",
+    "dificuldade": "medio",
+    "tempo_limite": 25
+  },
+  {
+    "id": "q11",
+    "enunciado": "Qual ferramenta usamos para criar e rodar o projeto React?",
+    "alternativas": ["Apache", "XAMPP", "Vite", "Pygame"],
+    "correta": 2,
+    "categoria": "React",
+    "dificuldade": "medio",
+    "tempo_limite": 25
+  },
+  {
+    "id": "q12",
+    "enunciado": "Qual função do Pygame cria a janela do jogo?",
+    "alternativas": [
+      "pygame.init",
+      "pygame.draw.rect",
+      "pygame.quit",
+      "pygame.display.set_mode"
+    ],
+    "correta": 3,
+    "categoria": "Games",
+    "dificuldade": "dificil",
+    "tempo_limite": 30
+  },
+  {
+    "id": "q13",
+    "enunciado": "Qual comando cria uma nova branch no Git?",
+    "alternativas": ["git checkout -b", "git merge", "git push", "git clone"],
+    "correta": 0,
+    "categoria": "Git",
+    "dificuldade": "medio",
+    "tempo_limite": 25
+  },
+  {
+    "id": "q14",
+    "enunciado": "Qual estrutura armazena pares chave-valor?",
+    "alternativas": ["Lista", "Dicionário", "Tupla", "Conjunto"],
+    "correta": 1,
+    "categoria": "Python",
+    "dificuldade": "facil",
+    "tempo_limite": 20
+  },
+  {
+    "id": "q15",
+    "enunciado": "O que faz o bloco try/except?",
+    "alternativas": ["Cria classes", "Repete laços", "Trata erros", "Importa arquivos"],
+    "correta": 2,
+    "categoria": "Python",
+    "dificuldade": "facil",
+    "tempo_limite": 20
+  },
+  {
+    "id": "q16",
+    "enunciado": "O que o comando git clone faz?",
+    "alternativas": [
+      "Cria uma cópia local de um repositório",
+      "Envia alterações para o GitHub",
+      "Cria uma branch",
+      "Apaga o repositório"
+    ],
+    "correta": 0,
+    "categoria": "Git",
+    "dificuldade": "medio",
+    "tempo_limite": 25
+  },
+  {
+    "id": "q17",
+    "enunciado": "Para que serve o Pydantic no FastAPI?",
+    "alternativas": [
+      "Criar telas",
+      "Validar dados de entrada",
+      "Desenhar gráficos",
+      "Compilar Python"
+    ],
+    "correta": 1,
+    "categoria": "Backend",
+    "dificuldade": "medio",
+    "tempo_limite": 25
+  },
+  {
+    "id": "q18",
+    "enunciado": "Quando uma classe herda de outra, isso é chamado de...",
+    "alternativas": ["Composição", "Encapsulamento", "Herança", "Polimorfismo"],
+    "correta": 2,
+    "categoria": "POO",
+    "dificuldade": "medio",
+    "tempo_limite": 25
+  },
+  {
+    "id": "q19",
+    "enunciado": "Qual ferramenta usamos para subir um servidor local simples no projeto HTTP?",
+    "alternativas": ["http-server", "PyCharm", "Photoshop", "Excel"],
+    "correta": 0,
+    "categoria": "Web",
+    "dificuldade": "dificil",
+    "tempo_limite": 30
+  },
+  {
+    "id": "q20",
+    "enunciado": "No jogo da cobrinha, o que acontece ao comer a comida?",
+    "alternativas": [
+      "A cobra diminui",
+      "A cobra cresce e a pontuação aumenta",
+      "O jogo reinicia",
+      "A cobra fica parada"
+    ],
+    "correta": 1,
+    "categoria": "Games",
+    "dificuldade": "medio",
+    "tempo_limite": 25
+  }
+]
