@@ -2,6 +2,13 @@ import { useState } from "react";
 
 const QUANTIDADES = ["5", "10", "15", "20", "Todas"];
 
+const DIFICULDADES = [
+  { valor: "Todas", rotulo: "Todas" },
+  { valor: "facil", rotulo: "Fácil" },
+  { valor: "medio", rotulo: "Médio" },
+  { valor: "dificil", rotulo: "Difícil" },
+];
+
 const DESTAQUES = [
   {
     icone: "⏱️",
@@ -29,6 +36,7 @@ export default function Home({
   const [nome, setNome] = useState("");
   const [categoria, setCategoria] = useState("Todas");
   const [quantidade, setQuantidade] = useState("10");
+  const [dificuldade, setDificuldade] = useState("Todas");
   const [aviso, setAviso] = useState("");
 
   function enviar(evento) {
@@ -40,7 +48,7 @@ export default function Home({
     }
 
     setAviso("");
-    onIniciar({ nome: nome.trim(), categoria, quantidade });
+    onIniciar({ nome: nome.trim(), categoria, quantidade, dificuldade });
   }
 
   return (
@@ -78,7 +86,7 @@ export default function Home({
             />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-3">
             <div>
               <label
                 htmlFor="categoria"
@@ -117,6 +125,27 @@ export default function Home({
                 {QUANTIDADES.map((item) => (
                   <option key={item} value={item}>
                     {item}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="dificuldade"
+                className="mb-2 block text-sm font-semibold text-slate-300"
+              >
+                Dificuldade
+              </label>
+              <select
+                id="dificuldade"
+                value={dificuldade}
+                onChange={(evento) => setDificuldade(evento.target.value)}
+                className="w-full rounded-xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-slate-100 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-400/30"
+              >
+                {DIFICULDADES.map((item) => (
+                  <option key={item.valor} value={item.valor}>
+                    {item.rotulo}
                   </option>
                 ))}
               </select>
@@ -162,7 +191,7 @@ export default function Home({
         <p className="rounded-2xl border border-dashed border-slate-800 px-5 py-4 text-xs leading-relaxed text-slate-500">
           Dica: para jogar, o backend precisa estar rodando com{" "}
           <code className="rounded bg-slate-800 px-1 py-0.5 text-slate-300">
-            uvicorn main:app --reload --port 8000
+            python main.py
           </code>
           .
         </p>
