@@ -36,6 +36,10 @@ jobs:
         if: ${{ hashFiles('desktop/painel.py') != '' }}
         run: python -m py_compile desktop/painel.py
 
+      - name: Checar sintaxe do app desktop
+        if: ${{ hashFiles('desktop/app.py') != '' }}
+        run: python -m py_compile desktop/app.py
+
       - name: Checar sintaxe do modo arcade
         if: ${{ hashFiles('arcade/quiz_arcade.py') != '' }}
         run: python -m py_compile arcade/quiz_arcade.py

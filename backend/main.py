@@ -20,7 +20,7 @@ RAIZ_PROJETO = Path(__file__).resolve().parent.parent
 if str(RAIZ_PROJETO) not in sys.path:
     sys.path.insert(0, str(RAIZ_PROJETO))
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 
 from core.models import CATEGORIAS_PADRAO, DIFICULDADES, ConflitoDeResposta
 from core.services import QuizService
@@ -28,6 +28,10 @@ from core.services import QuizService
 app = Flask(__name__)
 app.json.ensure_ascii = False
 service = QuizService()
+
+# Front-end React compilado. Quando existe, o próprio Flask entrega o app web,
+# então `python main.py` sobe tudo em uma única porta/processo.
+DIST_WEB = RAIZ_PROJETO / "web" / "dist"
 
 ORIGENS_PADRAO = "http://localhost:5173,http://127.0.0.1:5173"
 
@@ -413,7 +417,42 @@ def ranking():
     return jsonify(service.ranking(limite=max(1, min(limite, 100))))
 
 
+@app.get("/")
+@app.get("/<path:caminho>")
+def servir_web(caminho: str = ""):
+    """Entrega o front-end React compilado (`web/dist`) junto com a API.
+
+    Dessa forma `python main.py` abre a web completa em
+    http://127.0.0.1:8000 sem precisar de um segundo servidor (Vite). Rotas de
+    API inexistentes continuam respondendo JSON 404.
+    """
+    if caminho == "api" or caminho.startswith("api/"):
+        return _erro("Rota não encontrada.", 404)
+
+    if DIST_WEB.is_dir():
+        raiz_dist = DIST_WEB.resolve()
+        alvo = (DIST_WEB / caminho).resolve()
+        dentro = alvo == raiz_dist or raiz_dist in alvo.parents
+
+        if caminho and dentro and alvo.is_file():
+            return send_from_directory(DIST_WEB, caminho)
+
+        # Um arquivo com extensão que não existe deve ser 404 (ex.: favicon).
+        if caminho and "." in Path(caminho).name:
+            return _erro("Arquivo não encontrado.", 404)
+
+        if (DIST_WEB / "index.html").is_file():
+            return send_from_directory(DIST_WEB, "index.html")
+
+    return _erro(
+        "Front-end não compilado. Rode 'npm install' e 'npm run build' dentro de web/.",
+        404,
+    )
+
+
 if __name__ == "__main__":
     porta = int(os.getenv("PORT", "8000"))
     host = os.getenv("HOST", "127.0.0.1")
-    app.run(host=host, port=porta, debug=True)
+    # use_reloader=False mantém um único processo: fechar o terminal encerra o
+    # servidor de verdade (o reloader deixava um processo filho na porta 8000).
+    app.run(host=host, port=porta, debug=False, use_reloader=False)

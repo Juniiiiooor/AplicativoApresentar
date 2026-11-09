@@ -64,6 +64,13 @@ export default function App() {
     };
   }, []);
 
+  // Ao voltar ao menu (ou trocar de modo) a página recomeça no topo. Sem isso,
+  // quem estava no fim de uma tela longa continuava "no meio" da Home e tinha a
+  // impressão de que o botão "← Voltar ao menu" não havia funcionado.
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [tela]);
+
   async function iniciarPartida({ nome, categoria, quantidade, dificuldade }) {
     setCarregando(true);
     setErro("");

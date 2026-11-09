@@ -15,10 +15,13 @@ data/*.tmp
 
 # Node / Vite
 node_modules/
-web/dist/
 web/.vite/
 npm-debug.log*
 yarn-error.log*
+
+# O build web/dist é versionado de propósito: `python main.py` serve esse
+# front-end na porta 8000, sem exigir Node/npm na máquina da apresentação.
+# Rode `npm run build` em web/ sempre que alterar o React.
 
 # Variáveis de ambiente
 .env

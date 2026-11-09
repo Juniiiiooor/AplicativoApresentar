@@ -4,13 +4,18 @@ Aplicação de quiz criada como projeto em grupo para reunir, na prática, tudo 
 que foi visto nas aulas: **Python com POO**, **Tkinter**, **Pygame**, **HTML/CSS/JS**,
 **React + Vite + Tailwind**, **Flask**, **pytest/unittest** e **Git/GitHub**.
 
-O jogo tem três partes que compartilham o mesmo núcleo de regras:
+O projeto tem várias frentes que compartilham o mesmo núcleo de regras:
 
-- **Painel desktop (Tkinter)** — o apresentador inicia partidas, vê o tempo,
-  responde as perguntas, controla o avanço e cadastra novas perguntas.
-- **API (Flask)** — expõe perguntas, partidas, desafios e ranking em JSON.
+- **App desktop único (Tkinter)** — `desktop/app.py` abre um menu de cards com
+  **Quiz relâmpago**, **Caça ao Bug** e **Ranking**, funcionando offline pelo
+  `core/`, sem backend nem navegador.
+- **Painel do apresentador (Tkinter)** — inicia partidas, vê o tempo, responde
+  as perguntas, controla o avanço e cadastra novas perguntas.
+- **API (Flask)** — expõe perguntas, partidas, desafios e ranking em JSON e
+  também entrega a web compilada.
 - **Web (React)** — a Home funciona como um **menu de cards**: o jogador escolhe
   entre o **Quiz relâmpago**, o **Caça ao Bug** e o **Ranking**.
+- **Arcade (Pygame)** — versão com visual de fliperama usando as mesmas perguntas.
 
 O **Caça ao Bug** é o segundo modo de jogo: aparece um trecho de código com um
 erro e o jogador escolhe qual correção resolve o problema. Cada desafio vale 10
@@ -38,7 +43,10 @@ pontos e mostra uma explicação depois da resposta.
 - [x] Testes do núcleo com `unittest` (sem dependências externas)
 - [x] Testes da API com `pytest` + cliente de testes do Flask
 - [x] Painel Tkinter com abas **Partida** e **Perguntas**
+- [x] App desktop único (Tkinter) com menu de cards e modos offline
 - [x] Interface React com Home (cards), Quiz, Resultado, Ranking e Caça ao Bug
+- [x] `python main.py` sobe web + API em um único processo/porta
+- [x] Licença MIT em português (`LICENSE`)
 - [x] Pipeline de CI em `.github/workflows/pipeline.yml`
 
 ---
@@ -81,13 +89,16 @@ quiz-arena/
 │   ├── perguntas.json
 │   └── ranking.example.json
 ├── desktop/
+│   ├── app.py             # app único (menu de cards, offline)
 │   └── painel.py
 ├── docs/
 │   └── aprendizados.md
 ├── tests/
 │   ├── __init__.py
 │   └── test_core.py
+├── main.py                # sobe web + API com um comando
 ├── web/
+│   ├── dist/              # build servido pelo main.py
 │   ├── index.html
 │   ├── package.json
 │   ├── postcss.config.js
@@ -116,7 +127,7 @@ quiz-arena/
 
 > Todos os comandos abaixo partem da pasta `quiz-arena`.
 
-### 1. Backend (Flask)
+### 1. Aplicação completa (web + API) — um comando
 
 No Windows, use Python 3.11 ou 3.13 (o Python 3.15 pode não ter as dependências):
 
@@ -129,24 +140,25 @@ pip install -r backend/requirements.txt
 python main.py
 ```
 
-O `main.py` da raiz é um lançador: ele carrega a API de `backend/main.py` e
-sobe o servidor. Também funciona entrando na pasta `backend`:
+Esse único comando:
 
-```powershell
-cd backend
-python main.py
-```
+- sobe a API Flask;
+- entrega o front-end React já compilado (`web/dist`) na mesma porta;
+- abre o navegador em <http://127.0.0.1:8000>;
+- mantém **um único processo**: ao fechar o terminal (ou pressionar
+  **CTRL+C**), o site para de responder.
 
-Alternativa com o comando do Flask:
+> A web só funciona enquanto `python main.py` estiver aberto. Se `web/dist`
+> não existir, rode uma vez `cd web; npm install; npm run build`.
 
-```powershell
-cd backend
-flask --app main run --debug --port 8000
-```
+Endereços:
 
-- API: <http://localhost:8000>
-- Documentação simples: <http://localhost:8000/docs>
-- Health check: <http://localhost:8000/health>
+- Web + API: <http://127.0.0.1:8000>
+- Documentação simples: <http://127.0.0.1:8000/docs>
+- Health check: <http://127.0.0.1:8000/health>
+
+Também funciona entrando na pasta `backend` (`python main.py`), mas aí o
+front-end só é servido se `web/dist` existir.
 
 Variáveis opcionais:
 
@@ -156,10 +168,13 @@ Variáveis opcionais:
 | `QUIZ_CORS_ORIGINS` | Origens permitidas, separadas por vírgula (padrão: `localhost:5173`) |
 | `QUIZ_DATA_DIR` | Pasta alternativa para `perguntas.json` e `ranking.json` |
 | `PORT` | Porta do servidor Flask (padrão: `8000`) |
+| `QUIZ_ABRIR_NAVEGADOR` | `0` impede a abertura automática do navegador |
+| `QUIZ_DEBUG` | `1` liga o modo de depuração do Flask |
 
-### 2. Web (React + Vite)
+### 2. Modo desenvolvimento (React + Vite)
 
-Em outro terminal:
+Para editar o React com recarregamento automático, rode o Vite em outro
+terminal:
 
 ```powershell
 cd web
@@ -167,17 +182,27 @@ npm install
 npm run dev
 ```
 
-Abra <http://localhost:5173>. O Vite já encaminha `/api` e `/health` para
-`http://localhost:8000` (veja `web/vite.config.js`).
+Abra <http://localhost:5173>. O Vite encaminha `/api` e `/health` para
+`http://127.0.0.1:8000` (veja `web/vite.config.js`), então mantenha o
+`python main.py` rodando em outro terminal.
 
-Para gerar a versão de produção:
+Depois de alterar o React, gere o build que o `python main.py` serve:
 
 ```powershell
+cd web
 npm run build
-npm run preview
 ```
 
-### 3. Painel desktop (Tkinter)
+### 3. Apps desktop (Tkinter)
+
+App único com menu de cards (Quiz relâmpago, Caça ao Bug e Ranking), funcionando
+**offline** direto pelo `core/`:
+
+```powershell
+python desktop/app.py
+```
+
+Painel do apresentador (abas Partida e Perguntas):
 
 ```powershell
 python desktop/painel.py
@@ -366,8 +391,24 @@ manualmente (`workflow_dispatch`). Ele tem três jobs:
 ## 🛠️ Problemas comuns
 
 **A web mostra "Não foi possível carregar as categorias".**
-O backend não está rodando. Na raiz do projeto, inicie o Flask na porta 8000
-com `python main.py` (ou `cd backend; python main.py`).
+O servidor não está rodando. Na raiz do projeto, rode `python main.py` e abra
+<http://127.0.0.1:8000>. Se você estiver usando o modo desenvolvimento, o Vite
+(<http://localhost:5173>) também precisa do `python main.py` em outro terminal.
+
+**Fechei o terminal, mas a web continua abrindo.**
+A versão atual usa `use_reloader=False`, então `python main.py` é um único
+processo e para junto com o terminal. Se ainda houver algo na porta 8000 ou
+5173, encerre processos antigos:
+
+```powershell
+Get-NetTCPConnection -LocalPort 8000,5173 -State Listen |
+  Select-Object LocalPort,OwningProcess
+Stop-Process -Id <PID> -Force
+```
+
+**Alterei o React e a web em 8000 não mudou.**
+O `python main.py` serve o build em `web/dist`. Rode `cd web; npm run build`
+para atualizar (ou use o Vite em <http://localhost:5173> durante o desenvolvimento).
 
 **`ModuleNotFoundError: flask`.**
 O ambiente virtual não está ativado ou foi criado com outra versão do Python.

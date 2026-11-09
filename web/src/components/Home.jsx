@@ -95,16 +95,16 @@ export default function Home({ onJogarQuiz, onCacaBug, onVerRanking }) {
       </div>
 
       <p className="mt-8 rounded-2xl border border-dashed border-slate-800 px-5 py-4 text-center text-xs leading-relaxed text-slate-500">
-        Dica: os modos usam a mesma API Flask. Se aparecer erro de conexão,
-        abra um terminal na pasta do projeto e rode{" "}
+        Dica: a web inteira sobe junto com o backend. Abra um terminal na pasta
+        do projeto, rode{" "}
         <code className="rounded bg-slate-800 px-1 py-0.5 text-slate-300">
           python main.py
         </code>{" "}
-        para subir a API em{" "}
+        e acesse{" "}
         <code className="rounded bg-slate-800 px-1 py-0.5 text-slate-300">
-          http://localhost:8000
+          http://127.0.0.1:8000
         </code>
-        .
+        . Ao fechar o terminal, o site para de responder.
       </p>
     </section>
   );
