@@ -10,13 +10,14 @@ import shutil
 import sys
 import tempfile
 import unittest
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
 if str(RAIZ) not in sys.path:
     sys.path.insert(0, str(RAIZ))
 
-from core.models import Jogador, Partida, Pergunta
+from core.models import ConflitoDeResposta, Jogador, Partida, Pergunta
 from core.services import QuizService
 from core.storage import RepositorioJSON
 
@@ -86,6 +87,21 @@ class TestPergunta(unittest.TestCase):
         original = criar_pergunta("dificil", correta=2)
         copia = Pergunta.de_dict(original.para_dict())
         self.assertEqual(copia.para_dict(), original.para_dict())
+
+    def test_explicacao_so_aparece_quando_revelada(self) -> None:
+        pergunta = Pergunta(
+            id="q-exp",
+            enunciado="Pergunta com explicação?",
+            alternativas=["A", "B"],
+            correta=0,
+            explicacao="Porque sim.",
+        )
+        self.assertNotIn("explicacao", pergunta.para_publico())
+        self.assertEqual(pergunta.para_publico(revelar=True)["explicacao"], "Porque sim.")
+        self.assertEqual(
+            Pergunta.de_dict(pergunta.para_dict()).explicacao,
+            "Porque sim.",
+        )
 
 
 class TestJogador(unittest.TestCase):
@@ -165,8 +181,48 @@ class TestPartida(unittest.TestCase):
             perguntas=[criar_pergunta(), criar_pergunta()],
         ).iniciar()
         self.assertEqual(partida.progresso, "0/2")
+        self.assertEqual(partida.numero_pergunta, 1)
         partida.responder(0)
         self.assertEqual(partida.progresso, "1/2")
+        self.assertEqual(partida.numero_pergunta, 2)
+
+    def test_tempo_do_servidor_ignora_cliente(self) -> None:
+        partida = Partida(
+            jogador=Jogador(nome="Tina"),
+            perguntas=[criar_pergunta("facil", tempo_limite=20)],
+        ).iniciar()
+        partida.pergunta_iniciada_em = (
+            datetime.now(timezone.utc) - timedelta(seconds=18)
+        ).isoformat()
+
+        resposta = partida.responder(0, tempo_restante=999)
+
+        self.assertTrue(resposta.correta)
+        self.assertLess(resposta.pontos, 15)
+        self.assertLessEqual(resposta.tempo_restante, 3)
+
+    def test_revisao_final(self) -> None:
+        partida = Partida(
+            jogador=Jogador(nome="Rita"),
+            perguntas=[criar_pergunta(), criar_pergunta()],
+        ).iniciar()
+        partida.responder(0)
+        partida.responder(1)
+
+        revisao = partida.para_publico()["revisao"]
+        self.assertEqual(len(revisao), 2)
+        self.assertTrue(revisao[0]["acertou"])
+        self.assertFalse(revisao[1]["acertou"])
+        self.assertEqual(revisao[0]["correta"], "Certa")
+        self.assertEqual(revisao[1]["escolhida"], "Errada 1")
+
+    def test_pergunta_id_fora_de_ordem(self) -> None:
+        partida = Partida(
+            jogador=Jogador(nome="Zeca"),
+            perguntas=[criar_pergunta()],
+        ).iniciar()
+        with self.assertRaises(ConflitoDeResposta):
+            partida.responder(0, pergunta_id="outra-pergunta")
 
 
 class BaseComRepositorio(unittest.TestCase):
@@ -200,6 +256,23 @@ class TestRepositorio(BaseComRepositorio):
         self.assertEqual(ranking[0]["nome"], "Maior")
         self.assertEqual(ranking[1]["nome"], "Menor")
 
+    def test_ranking_agrega_mesmo_jogador(self) -> None:
+        primeira = Jogador(nome="Ana")
+        primeira.pontuacao = 30
+        primeira.acertos = 2
+        primeira.respondidas = 2
+        segunda = Jogador(nome="ana")
+        segunda.pontuacao = 80
+        segunda.acertos = 4
+        segunda.respondidas = 4
+
+        self.repo.registrar_no_ranking(primeira)
+        ranking = self.repo.registrar_no_ranking(segunda)
+
+        self.assertEqual(len(ranking), 1)
+        self.assertEqual(ranking[0]["pontuacao"], 80)
+        self.assertEqual(ranking[0]["partidas"], 2)
+
 
 class TestServico(BaseComRepositorio):
     def test_listar_perguntas_publicas(self) -> None:
@@ -220,6 +293,14 @@ class TestServico(BaseComRepositorio):
     def test_categoria_inexistente_nao_inicia_partida(self) -> None:
         with self.assertRaises(ValueError):
             self.service.iniciar_partida(nome="Léo", categoria="Astronomia")
+
+    def test_filtrar_por_dificuldade(self) -> None:
+        partida = self.service.iniciar_partida(
+            nome="Nina",
+            dificuldade="dificil",
+            quantidade=1,
+        )
+        self.assertEqual(partida.perguntas[0].dificuldade, "dificil")
 
     def test_partida_finalizada_entra_no_ranking(self) -> None:
         partida = self.service.iniciar_partida(nome="Marina", quantidade=1)

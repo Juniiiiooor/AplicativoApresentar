@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -25,6 +26,7 @@ class RepositorioJSON:
 
         self.arquivo_perguntas = self.data_dir / "perguntas.json"
         self.arquivo_ranking = self.data_dir / "ranking.json"
+        self._lock = threading.Lock()
         self._garantir_arquivos()
 
     def _garantir_arquivos(self) -> None:
@@ -59,12 +61,13 @@ class RepositorioJSON:
         )
 
     def adicionar_pergunta(self, pergunta: Pergunta) -> Pergunta:
-        perguntas = self.carregar_perguntas()
-        if any(item.id == pergunta.id for item in perguntas):
-            raise ValueError("Já existe uma pergunta com esse id.")
-        perguntas.append(pergunta)
-        self.salvar_perguntas(perguntas)
-        return pergunta
+        with self._lock:
+            perguntas = self.carregar_perguntas()
+            if any(item.id == pergunta.id for item in perguntas):
+                raise ValueError("Já existe uma pergunta com esse id.")
+            perguntas.append(pergunta)
+            self.salvar_perguntas(perguntas)
+            return pergunta
 
     # ------------------------------ Ranking ------------------------------
     def carregar_ranking(self) -> list[dict[str, Any]]:
@@ -74,18 +77,46 @@ class RepositorioJSON:
     def salvar_ranking(self, ranking: list[dict[str, Any]]) -> None:
         self._escrever(self.arquivo_ranking, ranking)
 
-    def registrar_no_ranking(self, jogador: Jogador) -> list[dict[str, Any]]:
-        ranking = self.carregar_ranking()
-        ranking.append(jogador.para_dict())
-        ranking.sort(
-            key=lambda item: (
-                int(item.get("pontuacao", 0)),
-                int(item.get("acertos", 0)),
-            ),
-            reverse=True,
+    @staticmethod
+    def _chave_ranking(item: dict[str, Any]) -> tuple[int, float, int]:
+        return (
+            int(item.get("pontuacao", 0)),
+            float(item.get("aproveitamento", 0)),
+            int(item.get("acertos", 0)),
         )
-        self.salvar_ranking(ranking)
-        return ranking
+
+    def registrar_no_ranking(self, jogador: Jogador) -> list[dict[str, Any]]:
+        """Guarda a melhor partida de cada jogador, sem duplicar nomes."""
+        with self._lock:
+            ranking = self.carregar_ranking()
+            chave_nome = jogador.nome.strip().casefold()
+            novo = jogador.para_dict()
+
+            existente = next(
+                (
+                    item
+                    for item in ranking
+                    if str(item.get("nome", "")).strip().casefold() == chave_nome
+                ),
+                None,
+            )
+
+            if existente is None:
+                novo["partidas"] = 1
+                ranking.append(novo)
+            else:
+                existente["partidas"] = int(existente.get("partidas", 1)) + 1
+                if self._chave_ranking(novo) > self._chave_ranking(existente):
+                    partidas = existente["partidas"]
+                    existente.clear()
+                    existente.update(novo)
+                    existente["partidas"] = partidas
+
+            ranking.sort(key=self._chave_ranking, reverse=True)
+            self.salvar_ranking(ranking)
+            return ranking
 
     def top_ranking(self, limite: int = 10) -> list[dict[str, Any]]:
-        return self.carregar_ranking()[: max(1, limite)]
+        ranking = self.carregar_ranking()
+        ranking.sort(key=self._chave_ranking, reverse=True)
+        return ranking[: max(1, limite)]
