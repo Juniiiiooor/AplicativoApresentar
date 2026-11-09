@@ -1,137 +1,312 @@
-"""API do Quiz Arena (FastAPI).
+"""API do Quiz Arena (Flask).
 
 Execute a partir da pasta backend:
-    uvicorn main:app --reload --port 8000
+    python main.py
+ou:
+    flask --app main run --debug --port 8000
 
-Documentação interativa: http://localhost:8000/docs
+Documentação simples: http://localhost:8000/docs
+Health check: http://localhost:8000/health
 """
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
-from typing import Literal
+from typing import Any
 
 RAIZ_PROJETO = Path(__file__).resolve().parent.parent
 if str(RAIZ_PROJETO) not in sys.path:
     sys.path.insert(0, str(RAIZ_PROJETO))
 
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from flask import Flask, jsonify, request
 
-from core.models import CATEGORIAS_PADRAO
+from core.models import CATEGORIAS_PADRAO, DIFICULDADES, ConflitoDeResposta
 from core.services import QuizService
 
-app = FastAPI(
-    title="Quiz Arena API",
-    version="0.1.0",
-    description="API de perguntas, partidas e ranking do Quiz Arena.",
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
+app = Flask(__name__)
+app.json.ensure_ascii = False
 service = QuizService()
 
-
-class NovaPergunta(BaseModel):
-    enunciado: str = Field(..., min_length=5)
-    alternativas: list[str] = Field(..., min_length=2)
-    correta: int = Field(..., ge=0)
-    categoria: str = "Geral"
-    dificuldade: Literal["facil", "medio", "dificil"] = "facil"
-    tempo_limite: int = Field(20, gt=0)
+ORIGENS_PADRAO = "http://localhost:5173,http://127.0.0.1:5173"
 
 
-class IniciarPartida(BaseModel):
-    nome: str = Field(..., min_length=2, max_length=30)
-    quantidade: int | None = Field(None, ge=1)
-    categoria: str | None = None
+def _origens_permitidas() -> list[str]:
+    valor = os.getenv("QUIZ_CORS_ORIGINS", ORIGENS_PADRAO)
+    return [item.strip() for item in valor.split(",") if item.strip()]
 
 
-class RespostaPayload(BaseModel):
-    # -1 significa "o tempo esgotou" e conta como resposta errada.
-    alternativa: int = Field(..., ge=-1)
-    tempo_restante: float | None = Field(None, ge=0)
+@app.after_request
+def adicionar_cabecalhos_cors(resposta):
+    """CORS sem depender de extensão externa."""
+    origem = request.headers.get("Origin")
+    permitidas = _origens_permitidas()
+
+    if "*" in permitidas:
+        resposta.headers["Access-Control-Allow-Origin"] = "*"
+    elif origem and origem in permitidas:
+        resposta.headers["Access-Control-Allow-Origin"] = origem
+        resposta.headers["Vary"] = "Origin"
+
+    resposta.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    resposta.headers["Access-Control-Allow-Headers"] = "Content-Type, X-Admin-Token"
+    return resposta
+
+
+@app.route("/api/<path:_caminho>", methods=["OPTIONS"])
+def preflight(_caminho: str):
+    return "", 204
+
+
+def _erro(mensagem: str, status: int):
+    return jsonify({"detail": mensagem}), status
+
+
+def _corpo_json() -> dict[str, Any]:
+    dados = request.get_json(silent=True)
+    return dados if isinstance(dados, dict) else {}
+
+
+def _validar_admin():
+    token = os.getenv("QUIZ_ADMIN_TOKEN")
+    if not token:
+        return None
+    if request.headers.get("X-Admin-Token", "") != token:
+        return _erro("Token de administrador inválido.", 401)
+    return None
+
+
+def _inteiro(valor: Any) -> bool:
+    return isinstance(valor, int) and not isinstance(valor, bool)
+
+
+def _numero(valor: Any) -> bool:
+    return isinstance(valor, (int, float)) and not isinstance(valor, bool)
 
 
 @app.get("/health")
-def healthcheck() -> dict:
-    return {"status": "ok", "service": "quiz-arena"}
+def healthcheck():
+    return jsonify(
+        {
+            "status": "ok",
+            "service": "quiz-arena",
+            "framework": "flask",
+        }
+    )
+
+
+@app.get("/docs")
+def documentacao():
+    rotas = [
+        ("GET", "/health", "Verifica se a API está no ar"),
+        ("GET", "/api/categorias", "Lista as categorias disponíveis"),
+        ("GET", "/api/perguntas", "Lista perguntas sem revelar a correta"),
+        ("POST", "/api/perguntas", "Cadastra uma pergunta (opcionalmente com token)"),
+        ("POST", "/api/partidas", "Inicia uma partida"),
+        ("GET", "/api/partidas/{id}", "Consulta o estado da partida"),
+        ("POST", "/api/partidas/{id}/responder", "Responde a pergunta atual"),
+        ("GET", "/api/ranking?limite=10", "Retorna o ranking"),
+    ]
+    linhas = "".join(
+        f"<tr><td><code>{metodo}</code></td><td><code>{rota}</code></td>"
+        f"<td>{descricao}</td></tr>"
+        for metodo, rota, descricao in rotas
+    )
+    return f"""<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Quiz Arena API</title>
+  <style>
+    body {{ font-family: system-ui, sans-serif; margin: 2rem; background: #0f172a; color: #e2e8f0; }}
+    h1 {{ color: #38bdf8; }}
+    table {{ border-collapse: collapse; width: 100%; max-width: 900px; }}
+    td, th {{ border-bottom: 1px solid #334155; padding: .6rem; text-align: left; }}
+    code {{ background: #1e293b; padding: .15rem .35rem; border-radius: .3rem; }}
+  </style>
+</head>
+<body>
+  <h1>🎯 Quiz Arena API</h1>
+  <p>Backend em Flask. As rotas abaixo devolvem JSON.</p>
+  <table>
+    <thead><tr><th>Método</th><th>Rota</th><th>Descrição</th></tr></thead>
+    <tbody>{linhas}</tbody>
+  </table>
+</body>
+</html>"""
 
 
 @app.get("/api/categorias")
-def listar_categorias() -> list[str]:
+def listar_categorias():
     perguntas = service.listar_perguntas(publico=True)
     existentes = {pergunta["categoria"] for pergunta in perguntas}
-    return sorted(set(CATEGORIAS_PADRAO) | existentes)
+    return jsonify(sorted(set(CATEGORIAS_PADRAO) | existentes))
 
 
 @app.get("/api/perguntas")
-def listar_perguntas(categoria: str | None = None) -> list[dict]:
-    return service.listar_perguntas(categoria=categoria, publico=True)
+def listar_perguntas():
+    categoria = request.args.get("categoria")
+    return jsonify(service.listar_perguntas(categoria=categoria, publico=True))
 
 
-@app.post("/api/perguntas", status_code=201)
-def criar_pergunta(payload: NovaPergunta) -> dict:
+@app.post("/api/perguntas")
+def criar_pergunta():
+    bloqueio = _validar_admin()
+    if bloqueio:
+        return bloqueio
+
+    dados = _corpo_json()
+
+    enunciado = dados.get("enunciado")
+    if not isinstance(enunciado, str) or len(enunciado.strip()) < 5:
+        return _erro("O enunciado precisa ter pelo menos 5 caracteres.", 422)
+
+    alternativas = dados.get("alternativas")
+    if not isinstance(alternativas, list) or len(alternativas) < 2:
+        return _erro("A pergunta precisa de pelo menos 2 alternativas.", 422)
+    if not all(isinstance(item, str) and item.strip() for item in alternativas):
+        return _erro("Todas as alternativas precisam ser textos não vazios.", 422)
+
+    correta = dados.get("correta")
+    if not _inteiro(correta):
+        return _erro("O índice da alternativa correta precisa ser um inteiro.", 422)
+    if not 0 <= correta < len(alternativas):
+        return _erro("O índice da alternativa correta é inválido.", 400)
+
+    dificuldade = dados.get("dificuldade", "facil")
+    if dificuldade not in DIFICULDADES:
+        return _erro("Dificuldade inválida. Use facil, medio ou dificil.", 422)
+
+    tempo_limite = dados.get("tempo_limite", 20)
+    if not _inteiro(tempo_limite) or tempo_limite <= 0:
+        return _erro("O tempo limite deve ser um inteiro maior que zero.", 422)
+
+    categoria = dados.get("categoria", "Geral")
+    if not isinstance(categoria, str) or not categoria.strip():
+        return _erro("A categoria precisa ser um texto não vazio.", 422)
+
+    explicacao = dados.get("explicacao", "")
+    if not isinstance(explicacao, str):
+        return _erro("A explicação precisa ser um texto.", 422)
+
     try:
-        pergunta = service.criar_pergunta(payload.model_dump())
-    except ValueError as erro:
-        raise HTTPException(status_code=400, detail=str(erro)) from erro
-    return pergunta.para_dict()
-
-
-@app.post("/api/partidas", status_code=201)
-def iniciar_partida(payload: IniciarPartida) -> dict:
-    try:
-        partida = service.iniciar_partida(
-            nome=payload.nome,
-            quantidade=payload.quantidade,
-            categoria=payload.categoria,
+        pergunta = service.criar_pergunta(
+            {
+                "enunciado": enunciado,
+                "alternativas": alternativas,
+                "correta": correta,
+                "categoria": categoria.strip(),
+                "dificuldade": dificuldade,
+                "tempo_limite": tempo_limite,
+                "explicacao": explicacao,
+            }
         )
     except ValueError as erro:
-        raise HTTPException(status_code=400, detail=str(erro)) from erro
-    return partida.para_publico()
+        return _erro(str(erro), 400)
+
+    return jsonify(pergunta.para_dict()), 201
 
 
-@app.get("/api/partidas/{partida_id}")
-def obter_partida(partida_id: str) -> dict:
+@app.post("/api/partidas")
+def iniciar_partida():
+    dados = _corpo_json()
+
+    nome = dados.get("nome")
+    if not isinstance(nome, str) or not 2 <= len(nome.strip()) <= 30:
+        return _erro("O nome precisa ter entre 2 e 30 caracteres.", 422)
+
+    quantidade = dados.get("quantidade")
+    if quantidade is not None and (not _inteiro(quantidade) or quantidade < 1):
+        return _erro("A quantidade precisa ser um inteiro maior ou igual a 1.", 422)
+
+    categoria = dados.get("categoria")
+    if categoria is not None and not isinstance(categoria, str):
+        return _erro("A categoria precisa ser um texto.", 422)
+
+    dificuldade = dados.get("dificuldade")
+    if dificuldade is not None and dificuldade not in DIFICULDADES:
+        return _erro("Dificuldade inválida. Use facil, medio ou dificil.", 422)
+
+    try:
+        partida = service.iniciar_partida(
+            nome=nome.strip(),
+            quantidade=quantidade,
+            categoria=categoria,
+            dificuldade=dificuldade,
+        )
+    except ValueError as erro:
+        return _erro(str(erro), 400)
+
+    return jsonify(partida.para_publico()), 201
+
+
+@app.get("/api/partidas/<partida_id>")
+def obter_partida(partida_id: str):
     try:
         partida = service.obter_partida(partida_id)
-    except KeyError as erro:
-        raise HTTPException(status_code=404, detail=str(erro)) from erro
-    return partida.para_publico()
+    except KeyError:
+        return _erro("Partida não encontrada.", 404)
+    return jsonify(partida.para_publico())
 
 
-@app.post("/api/partidas/{partida_id}/responder")
-def responder(partida_id: str, payload: RespostaPayload) -> dict:
+@app.post("/api/partidas/<partida_id>/responder")
+def responder(partida_id: str):
+    dados = _corpo_json()
+
+    alternativa = dados.get("alternativa")
+    if not _inteiro(alternativa) or alternativa < -1:
+        return _erro("A alternativa precisa ser um inteiro maior ou igual a -1.", 422)
+
+    tempo_restante = dados.get("tempo_restante")
+    if tempo_restante is not None and (
+        not _numero(tempo_restante) or tempo_restante < 0
+    ):
+        return _erro("O tempo restante precisa ser um número maior ou igual a zero.", 422)
+
+    pergunta_id = dados.get("pergunta_id")
+    if pergunta_id is not None and not isinstance(pergunta_id, str):
+        return _erro("O pergunta_id precisa ser um texto.", 422)
+
     try:
         partida, pergunta, resposta = service.responder(
             partida_id=partida_id,
-            alternativa=payload.alternativa,
-            tempo_restante=payload.tempo_restante,
+            alternativa=alternativa,
+            tempo_restante=tempo_restante,
+            pergunta_id=pergunta_id,
         )
-    except KeyError as erro:
-        raise HTTPException(status_code=404, detail=str(erro)) from erro
+    except KeyError:
+        return _erro("Partida não encontrada.", 404)
+    except ConflitoDeResposta as erro:
+        return _erro(str(erro), 409)
     except ValueError as erro:
-        raise HTTPException(status_code=400, detail=str(erro)) from erro
+        return _erro(str(erro), 400)
 
-    return {
-        "correta": resposta.correta,
-        "alternativa_escolhida": payload.alternativa,
-        "alternativa_correta": pergunta.correta,
-        "pontos": resposta.pontos,
-        "pergunta_respondida": pergunta.para_publico(),
-        "partida": partida.para_publico(),
-    }
+    return jsonify(
+        {
+            "correta": resposta.correta,
+            "alternativa_escolhida": alternativa,
+            "alternativa_correta": pergunta.correta,
+            "pontos": resposta.pontos,
+            "explicacao": pergunta.explicacao,
+            "pergunta_respondida": pergunta.para_publico(revelar=True),
+            "partida": partida.para_publico(),
+        }
+    )
 
 
 @app.get("/api/ranking")
-def ranking(limite: int = 10) -> list[dict]:
-    return service.ranking(limite=max(1, min(limite, 100)))
+def ranking():
+    limite_bruto = request.args.get("limite", "10")
+    try:
+        limite = int(limite_bruto)
+    except (TypeError, ValueError):
+        return _erro("O limite precisa ser um inteiro.", 422)
+
+    return jsonify(service.ranking(limite=max(1, min(limite, 100))))
+
+
+if __name__ == "__main__":
+    porta = int(os.getenv("PORT", "8000"))
+    host = os.getenv("HOST", "127.0.0.1")
+    app.run(host=host, port=porta, debug=True)

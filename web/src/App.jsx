@@ -5,11 +5,14 @@ import Resultado from "./components/Resultado";
 import Ranking from "./components/Ranking";
 import { api } from "./lib/api";
 
+const CHAVE_PARTIDA = "quiz-arena:partida";
+
 export default function App() {
   const [tela, setTela] = useState("home");
   const [categorias, setCategorias] = useState([]);
   const [partida, setPartida] = useState(null);
   const [carregando, setCarregando] = useState(false);
+  const [retomando, setRetomando] = useState(true);
   const [erro, setErro] = useState("");
 
   useEffect(() => {
@@ -23,9 +26,35 @@ export default function App() {
       .catch(() => {
         if (ativo) {
           setErro(
-            "Não foi possível carregar as categorias. O backend está rodando em http://localhost:8000?",
+            "Não foi possível carregar as categorias. O backend Flask está rodando em http://localhost:8000?",
           );
         }
+      });
+
+    const idSalvo = localStorage.getItem(CHAVE_PARTIDA);
+    if (!idSalvo) {
+      setRetomando(false);
+      return () => {
+        ativo = false;
+      };
+    }
+
+    api
+      .obterPartida(idSalvo)
+      .then((salva) => {
+        if (!ativo) return;
+        if (salva.status === "em_andamento") {
+          setPartida(salva);
+          setTela("quiz");
+        } else {
+          localStorage.removeItem(CHAVE_PARTIDA);
+        }
+      })
+      .catch(() => {
+        if (ativo) localStorage.removeItem(CHAVE_PARTIDA);
+      })
+      .finally(() => {
+        if (ativo) setRetomando(false);
       });
 
     return () => {
@@ -33,7 +62,7 @@ export default function App() {
     };
   }, []);
 
-  async function iniciarPartida({ nome, categoria, quantidade }) {
+  async function iniciarPartida({ nome, categoria, quantidade, dificuldade }) {
     setCarregando(true);
     setErro("");
 
@@ -42,7 +71,9 @@ export default function App() {
         nome,
         categoria: categoria === "Todas" ? null : categoria,
         quantidade: quantidade === "Todas" ? null : Number(quantidade),
+        dificuldade: dificuldade === "Todas" ? null : dificuldade,
       });
+      localStorage.setItem(CHAVE_PARTIDA, novaPartida.id);
       setPartida(novaPartida);
       setTela("quiz");
     } catch (falha) {
@@ -53,11 +84,13 @@ export default function App() {
   }
 
   function finalizarPartida(partidaFinal) {
+    localStorage.removeItem(CHAVE_PARTIDA);
     setPartida(partidaFinal);
     setTela("resultado");
   }
 
   function voltarAoInicio() {
+    localStorage.removeItem(CHAVE_PARTIDA);
     setPartida(null);
     setErro("");
     setTela("home");
@@ -89,7 +122,13 @@ export default function App() {
           </div>
         )}
 
-        {tela === "home" && (
+        {retomando && (
+          <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-8 text-center text-sm text-slate-400">
+            Verificando partida em andamento...
+          </div>
+        )}
+
+        {!retomando && tela === "home" && (
           <Home
             categorias={categorias}
             carregando={carregando}
@@ -98,7 +137,7 @@ export default function App() {
           />
         )}
 
-        {tela === "quiz" && partida && (
+        {!retomando && tela === "quiz" && partida && (
           <Quiz
             partida={partida}
             onFinalizar={finalizarPartida}
@@ -106,14 +145,16 @@ export default function App() {
           />
         )}
 
-        {tela === "resultado" && partida && (
+        {!retomando && tela === "resultado" && partida && (
           <Resultado partida={partida} onJogarNovamente={voltarAoInicio} />
         )}
 
-        {tela === "ranking" && <Ranking onVoltar={voltarAoInicio} />}
+        {!retomando && tela === "ranking" && (
+          <Ranking onVoltar={voltarAoInicio} />
+        )}
 
         <footer className="mt-auto pt-10 text-center text-xs text-slate-600">
-          Projeto em grupo · FastAPI + React + Tkinter
+          Projeto em grupo · Flask + React + Tkinter
         </footer>
       </main>
     </div>

@@ -36,18 +36,21 @@ export const api = {
       }`,
     ),
 
-  iniciarPartida: ({ nome, categoria, quantidade }) =>
+  iniciarPartida: ({ nome, categoria, quantidade, dificuldade }) =>
     request("/api/partidas", {
       method: "POST",
-      body: JSON.stringify({ nome, categoria, quantidade }),
+      body: JSON.stringify({ nome, categoria, quantidade, dificuldade }),
     }),
 
-  responder: (partidaId, alternativa, tempoRestante) =>
+  obterPartida: (partidaId) => request(`/api/partidas/${partidaId}`),
+
+  responder: (partidaId, alternativa, tempoRestante, perguntaId) =>
     request(`/api/partidas/${partidaId}/responder`, {
       method: "POST",
       body: JSON.stringify({
         alternativa,
         tempo_restante: tempoRestante,
+        pergunta_id: perguntaId,
       }),
     }),
 

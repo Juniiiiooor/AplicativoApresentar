@@ -78,6 +78,7 @@ export default function Ranking({ onVoltar, limite = 10 }) {
                 </p>
                 <p className="text-xs text-slate-500">
                   {jogador.acertos} acerto(s) · {jogador.aproveitamento}%
+                  {jogador.partidas ? ` · ${jogador.partidas} partida(s)` : ""}
                 </p>
               </div>
 

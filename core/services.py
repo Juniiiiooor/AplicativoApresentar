@@ -1,6 +1,6 @@
 """Serviços que orquestram as regras do jogo.
 
-O backend FastAPI e o painel Tkinter usam esta mesma classe.
+O backend Flask e o painel Tkinter usam esta mesma classe.
 """
 
 from __future__ import annotations
@@ -10,6 +10,8 @@ from typing import Any
 
 from .models import Jogador, Partida, Pergunta
 from .storage import RepositorioJSON
+
+MAX_PARTIDAS_EM_MEMORIA = 200
 
 
 class QuizService:
@@ -46,6 +48,7 @@ class QuizService:
         nome: str,
         quantidade: int | None = None,
         categoria: str | None = None,
+        dificuldade: str | None = None,
         embaralhar: bool = True,
     ) -> Partida:
         perguntas = self.repo.carregar_perguntas()
@@ -55,6 +58,13 @@ class QuizService:
                 pergunta
                 for pergunta in perguntas
                 if pergunta.categoria.lower() == categoria.lower()
+            ]
+
+        if dificuldade:
+            perguntas = [
+                pergunta
+                for pergunta in perguntas
+                if pergunta.dificuldade.lower() == dificuldade.lower()
             ]
 
         if not perguntas:
@@ -69,7 +79,22 @@ class QuizService:
         jogador = Jogador(nome=nome)
         partida = Partida(jogador=jogador, perguntas=perguntas).iniciar()
         self.partidas[partida.id] = partida
+        self._limpar_partidas()
         return partida
+
+    def _limpar_partidas(self) -> None:
+        """Evita crescimento infinito da memória em partidas longas."""
+        excedente = len(self.partidas) - MAX_PARTIDAS_EM_MEMORIA
+        if excedente <= 0:
+            return
+
+        finalizadas = [
+            partida_id
+            for partida_id, partida in self.partidas.items()
+            if partida.status == "finalizada"
+        ]
+        for partida_id in finalizadas[:excedente]:
+            self.partidas.pop(partida_id, None)
 
     def obter_partida(self, partida_id: str) -> Partida:
         partida = self.partidas.get(partida_id)
@@ -82,6 +107,7 @@ class QuizService:
         partida_id: str,
         alternativa: int,
         tempo_restante: float | None = None,
+        pergunta_id: str | None = None,
     ) -> tuple[Partida, Pergunta, Any]:
         partida = self.obter_partida(partida_id)
         pergunta = partida.pergunta_atual()
@@ -89,7 +115,7 @@ class QuizService:
         if pergunta is None:
             raise ValueError("A partida já terminou.")
 
-        resposta = partida.responder(alternativa, tempo_restante)
+        resposta = partida.responder(alternativa, tempo_restante, pergunta_id)
 
         if partida.status == "finalizada":
             self.repo.registrar_no_ranking(partida.jogador)

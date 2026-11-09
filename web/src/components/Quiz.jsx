@@ -5,7 +5,7 @@ const LETRAS = ["A", "B", "C", "D", "E", "F"];
 
 function classesDaAlternativa(indice, feedback) {
   if (!feedback) {
-    return "border-slate-700 bg-slate-950/60 hover:border-sky-400/70 hover:bg-sky-500/10";
+    return "border-slate-700 bg-slate-950/60 hover:border-sky-400/70 hover:bg-sky-500/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400";
   }
   if (indice === feedback.alternativa_correta) {
     return "border-emerald-400/70 bg-emerald-500/15 text-emerald-100";
@@ -44,6 +44,7 @@ export default function Quiz({ partida: partidaInicial, onFinalizar, onSair }) {
           partida.id,
           alternativa,
           alternativa === -1 ? 0 : tempo,
+          pergunta.id,
         );
         setFeedback(dados);
       } catch (falha) {
@@ -82,7 +83,7 @@ export default function Quiz({ partida: partidaInicial, onFinalizar, onSair }) {
     }
   }, [tempo, pergunta, respondida, responder]);
 
-  function avancar() {
+  const avancar = useCallback(() => {
     if (!feedback) return;
 
     if (feedback.partida.status === "finalizada") {
@@ -95,7 +96,51 @@ export default function Quiz({ partida: partidaInicial, onFinalizar, onSair }) {
     setErro("");
     setFeedback(null);
     setPartida(feedback.partida);
-  }
+  }, [feedback, onFinalizar]);
+
+  useEffect(() => {
+    function aoPressionar(evento) {
+      if (evento.repeat) return;
+      const alvo = evento.target;
+      if (
+        alvo &&
+        ["INPUT", "TEXTAREA", "SELECT"].includes(alvo.tagName)
+      ) {
+        return;
+      }
+
+      if (feedback) {
+        if (evento.key === "Enter" || evento.key === " ") {
+          evento.preventDefault();
+          avancar();
+        }
+        return;
+      }
+
+      const atalhos = {
+        "1": 0,
+        "2": 1,
+        "3": 2,
+        "4": 3,
+        a: 0,
+        b: 1,
+        c: 2,
+        d: 3,
+      };
+      const indice = atalhos[evento.key.toLowerCase()];
+      if (
+        indice !== undefined &&
+        pergunta &&
+        indice < pergunta.alternativas.length
+      ) {
+        evento.preventDefault();
+        responder(indice);
+      }
+    }
+
+    window.addEventListener("keydown", aoPressionar);
+    return () => window.removeEventListener("keydown", aoPressionar);
+  }, [feedback, pergunta, responder, avancar]);
 
   if (!pergunta) {
     return (
@@ -120,6 +165,8 @@ export default function Quiz({ partida: partidaInicial, onFinalizar, onSair }) {
   const respostaCorreta =
     feedback &&
     feedback.pergunta_respondida.alternativas[feedback.alternativa_correta];
+  const explicacao =
+    feedback && (feedback.explicacao || feedback.pergunta_respondida.explicacao);
 
   return (
     <section className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 shadow-2xl shadow-sky-950/40 backdrop-blur sm:p-8">
@@ -129,13 +176,16 @@ export default function Quiz({ partida: partidaInicial, onFinalizar, onSair }) {
             {partida.jogador.nome}
           </p>
           <p className="mt-1 text-sm text-slate-400">
-            Pergunta {partida.progresso} · {pergunta.categoria} ·{" "}
+            Pergunta {partida.numero_pergunta ?? partida.indice_atual + 1} de{" "}
+            {partida.total_perguntas} · {pergunta.categoria} ·{" "}
             {pergunta.dificuldade}
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <span
+            role="timer"
+            aria-live="off"
             className={`rounded-full px-4 py-2 text-sm font-black tabular-nums ${
               tempoCritico
                 ? "bg-red-500/15 text-red-300"
@@ -189,6 +239,10 @@ export default function Quiz({ partida: partidaInicial, onFinalizar, onSair }) {
         ))}
       </div>
 
+      <p className="mt-4 text-center text-xs text-slate-500">
+        Atalhos: A–D ou 1–4 para responder · Enter para avançar
+      </p>
+
       {erro && (
         <p className="mt-5 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
           {erro}
@@ -196,18 +250,26 @@ export default function Quiz({ partida: partidaInicial, onFinalizar, onSair }) {
       )}
 
       {feedback && (
-        <div
-          className={`mt-6 rounded-2xl border px-4 py-4 text-sm font-semibold ${
-            feedback.correta
-              ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200"
-              : "border-amber-400/40 bg-amber-500/10 text-amber-200"
-          }`}
-        >
-          {feedback.correta
-            ? `✅ Correto! +${feedback.pontos} pontos`
-            : feedback.alternativa_escolhida === -1
-              ? `⏰ Tempo esgotado! A resposta certa era: ${respostaCorreta}`
-              : `❌ Quase! A resposta certa era: ${respostaCorreta}`}
+        <div aria-live="polite">
+          <div
+            className={`mt-6 rounded-2xl border px-4 py-4 text-sm font-semibold ${
+              feedback.correta
+                ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200"
+                : "border-amber-400/40 bg-amber-500/10 text-amber-200"
+            }`}
+          >
+            {feedback.correta
+              ? `✅ Correto! +${feedback.pontos} pontos`
+              : feedback.alternativa_escolhida === -1
+                ? `⏰ Tempo esgotado! A resposta certa era: ${respostaCorreta}`
+                : `❌ Quase! A resposta certa era: ${respostaCorreta}`}
+          </div>
+
+          {explicacao && (
+            <p className="mt-3 rounded-xl border border-sky-500/30 bg-sky-500/10 px-4 py-3 text-sm text-sky-100">
+              💡 {explicacao}
+            </p>
+          )}
         </div>
       )}
 
