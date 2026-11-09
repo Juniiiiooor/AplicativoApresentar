@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Baixar o código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Configurar Python 3.11
         uses: actions/setup-python@v5
@@ -46,7 +46,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Baixar o código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Configurar Python 3.11
         uses: actions/setup-python@v5
@@ -74,7 +74,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Baixar o código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Configurar Node.js 20
         uses: actions/setup-node@v4
