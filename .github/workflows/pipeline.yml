@@ -1,0 +1,76 @@
+name: CI · Quiz Arena
+
+on:
+  push:
+    branches: [main, master, develop, "feat/**"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: quiz-arena-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core:
+    name: Núcleo e testes (unittest)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Os guards mantêm a main verde antes de as branches serem integradas.
+      - name: Rodar testes do núcleo
+        if: ${{ hashFiles('tests/**/*.py') != '' }}
+        run: python -m unittest discover -s tests -v
+
+      - name: Checar sintaxe do painel Tkinter
+        if: ${{ hashFiles('desktop/painel.py') != '' }}
+        run: python -m py_compile desktop/painel.py
+
+  backend:
+    name: API e testes (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependências
+        if: ${{ hashFiles('backend/requirements.txt') != '' }}
+        run: pip install -r backend/requirements.txt
+
+      - name: Rodar testes da API
+        if: ${{ hashFiles('backend/test_main.py') != '' }}
+        working-directory: backend
+        run: pytest -q
+
+  web:
+    name: Build do front-end (Vite)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Instalar dependências
+        if: ${{ hashFiles('web/package.json') != '' }}
+        working-directory: web
+        run: npm install --no-audit --no-fund
+
+      - name: Gerar build de produção
+        if: ${{ hashFiles('web/package.json') != '' }}
+        working-directory: web
+        run: npm run build
