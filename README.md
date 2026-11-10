@@ -27,12 +27,16 @@ pontos e mostra uma explicação depois da resposta.
 
 ### Opção 1 — pacote portátil (recomendado)
 
-**Não precisa instalar Python e não usa `.exe` compilado**, por isso o
-antivírus não sinaliza. O Python e o Tkinter já vão embutidos.
+**Roda em qualquer Windows 10/11 de 64 bits, sem instalar Python.** O Python e o
+Tkinter vão embutidos, e o pacote **não usa `.exe` compilado** — por isso o
+antivírus não sinaliza.
 
 1. Baixe **[Quiz-Arena-Portatil.zip](https://github.com/Juniiiiooor/Quiz--e--bug/raw/main/downloads/Quiz-Arena-Portatil.zip)** (~14 MB).
-2. Extraia a pasta.
-3. Dê duplo clique em **`Quiz Arena.bat`**.
+2. Extraia a pasta (pode ser em qualquer lugar, inclusive com espaços/acentos).
+3. Dê duplo clique em **`Quiz Arena.cmd`**.
+
+> O pacote foi verificado com o Windows Defender: **nenhuma ameaça encontrada**.
+> Ele não depende do Python da máquina onde foi gerado.
 
 ### Opção 2 — código-fonte (para quem já tem Python)
 
@@ -40,7 +44,7 @@ Pacote leve, para máquinas que já têm Python 3.11+ com Tkinter.
 
 1. Baixe **[Quiz-Arena-Codigo.zip](https://github.com/Juniiiiooor/Quiz--e--bug/raw/main/downloads/Quiz-Arena-Codigo.zip)**.
 2. Extraia a pasta.
-3. Dê duplo clique em **`Quiz Arena.bat`**.
+3. Dê duplo clique em **`Quiz Arena.cmd`**.
 
 > O antigo `Quiz-Arena-Windows.zip` com `.exe` foi removido porque o
 > PyInstaller gera **falso positivo** no Windows Defender.
