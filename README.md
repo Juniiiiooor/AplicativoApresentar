@@ -25,27 +25,25 @@ pontos e mostra uma explicação depois da resposta.
 
 ## ⬇️ Baixar o aplicativo (Windows)
 
-### Opção 1 — pacote sem `.exe` (recomendado)
+### Opção 1 — pacote portátil (recomendado)
 
-Não é sinalizado pelo antivírus. Requer Python 3.11+ instalado (o instalador
-oficial do python.org já inclui o Tkinter).
+**Não precisa instalar Python e não usa `.exe` compilado**, por isso o
+antivírus não sinaliza. O Python e o Tkinter já vão embutidos.
+
+1. Baixe **[Quiz-Arena-Portatil.zip](https://github.com/Juniiiiooor/Quiz--e--bug/raw/main/downloads/Quiz-Arena-Portatil.zip)** (~14 MB).
+2. Extraia a pasta.
+3. Dê duplo clique em **`Quiz Arena.bat`**.
+
+### Opção 2 — código-fonte (para quem já tem Python)
+
+Pacote leve, para máquinas que já têm Python 3.11+ com Tkinter.
 
 1. Baixe **[Quiz-Arena-Codigo.zip](https://github.com/Juniiiiooor/Quiz--e--bug/raw/main/downloads/Quiz-Arena-Codigo.zip)**.
 2. Extraia a pasta.
 3. Dê duplo clique em **`Quiz Arena.bat`**.
 
-### Opção 2 — executável pronto
-
-Não precisa instalar Python, mas o `.exe` **não é assinado digitalmente** e
-alguns antivírus (incluindo o Windows Defender) podem acusar um **falso
-positivo** gerado pelo PyInstaller.
-
-1. Baixe **[Quiz-Arena-Windows.zip](https://github.com/Juniiiiooor/Quiz--e--bug/raw/main/downloads/Quiz-Arena-Windows.zip)**.
-2. Extraia a pasta.
-3. Dê duplo clique em **`Quiz Arena.exe`**.
-
-> Se o Windows bloquear, clique em **Mais informações → Executar assim mesmo**.
-> Se o antivírus colocar em quarentena, use a **Opção 1**.
+> O antigo `Quiz-Arena-Windows.zip` com `.exe` foi removido porque o
+> PyInstaller gera **falso positivo** no Windows Defender.
 
 O app abre offline com os modos **Quiz relâmpago**, **Caça ao Bug** e **Ranking**.
 O ranking fica salvo em `data/ranking.json`.
@@ -125,7 +123,8 @@ quiz-arena/
 ├── docs/
 │   └── aprendizados.md
 ├── downloads/
-│   └── Quiz-Arena-Windows.zip   # app desktop pronto para baixar
+│   ├── Quiz-Arena-Portatil.zip  # app + Python embutido (recomendado)
+│   └── Quiz-Arena-Codigo.zip    # código-fonte leve
 ├── tests/
 │   ├── __init__.py
 │   └── test_core.py
