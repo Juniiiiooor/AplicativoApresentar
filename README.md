@@ -27,7 +27,7 @@ pontos e mostra uma explicação depois da resposta.
 
 Se você só quer jogar no Windows, sem instalar Python nem abrir o navegador:
 
-1. Baixe **[Quiz-Arena-Windows.zip](downloads/Quiz-Arena-Windows.zip)**.
+1. Baixe **[Quiz-Arena-Windows.zip](https://github.com/Juniiiiooor/Quiz--e--bug/raw/main/downloads/Quiz-Arena-Windows.zip)**.
 2. Extraia a pasta.
 3. Dê duplo clique em **`Quiz Arena.exe`**.
 
@@ -111,10 +111,13 @@ quiz-arena/
 │   └── painel.py
 ├── docs/
 │   └── aprendizados.md
+├── downloads/
+│   └── Quiz-Arena-Windows.zip   # app desktop pronto para baixar
 ├── tests/
 │   ├── __init__.py
 │   └── test_core.py
 ├── main.py                # sobe web + API com um comando
+├── Quiz Arena.bat         # atalho para abrir o app desktop
 ├── web/
 │   ├── dist/              # build servido pelo main.py
 │   ├── index.html
@@ -344,25 +347,17 @@ X-Admin-Token: seu-token
 
 ---
 
-## 🌿 Branches do grupo
+## 🌿 Branch principal
 
-O trabalho está separado em três branches, que devem ser integradas na `main`
-nesta ordem:
-
-1. `feat/core-backend` — núcleo, dados, API e testes.
-2. `feat/desktop` — painel Tkinter.
-3. `feat/web` — interface React e integração final.
+Todo o projeto está consolidado na branch **`main`**. Para atualizar:
 
 ```powershell
 git switch main
-git merge feat/core-backend
-git merge feat/desktop
-git merge feat/web
-git push origin main
+git pull origin main
 ```
 
-A branch `feat/web` contém todo o projeto, então é a melhor para visualizar a
-versão completa antes do merge.
+As antigas branches de trabalho (`feat/core-backend`, `feat/desktop`,
+`feat/web`, `feat/melhorias`) já foram integradas e podem ser removidas.
 
 ---
 
