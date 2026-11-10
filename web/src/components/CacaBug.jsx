@@ -242,15 +242,15 @@ export default function CacaBug({ onVoltar }) {
   return (
     <section className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 shadow-2xl shadow-emerald-950/40 backdrop-blur sm:p-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
+        <div className="space-y-2">
           <button
             type="button"
             onClick={onVoltar}
-            className="text-xs font-semibold text-slate-400 transition hover:text-emerald-300"
+            className="block text-xs font-semibold text-slate-400 transition hover:text-emerald-300"
           >
             ← Voltar ao menu
           </button>
-          <p className="mt-2 text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400">
             Caça ao Bug · {indice + 1} de {desafios.length}
           </p>
         </div>

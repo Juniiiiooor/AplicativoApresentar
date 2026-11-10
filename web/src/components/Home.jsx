@@ -81,7 +81,7 @@ export default function Home({ onJogarQuiz, onCacaBug, onVerRanking }) {
               {modo.descricao}
             </p>
 
-            <span className="mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
+            <span className="mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
               {modo.topicos}
             </span>
 
@@ -94,7 +94,7 @@ export default function Home({ onJogarQuiz, onCacaBug, onVerRanking }) {
         ))}
       </div>
 
-      <p className="mt-8 rounded-2xl border border-dashed border-slate-800 px-5 py-4 text-center text-xs leading-relaxed text-slate-500">
+      <p className="mt-8 rounded-2xl border border-dashed border-slate-800 px-5 py-4 text-center text-xs leading-relaxed text-slate-400">
         Dica: a web inteira sobe junto com o backend. Abra um terminal na pasta
         do projeto, rode{" "}
         <code className="rounded bg-slate-800 px-1 py-0.5 text-slate-300">

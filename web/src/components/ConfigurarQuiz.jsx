@@ -36,15 +36,17 @@ export default function ConfigurarQuiz({
   return (
     <section className="grid gap-6 lg:grid-cols-[1.25fr_1fr]">
       <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 shadow-2xl shadow-sky-950/40 backdrop-blur sm:p-8">
-        <button
-          type="button"
-          onClick={onVoltar}
-          className="text-xs font-semibold text-slate-400 transition hover:text-sky-300"
-        >
-          ← Voltar ao menu
-        </button>
+        <div className="mb-4">
+          <button
+            type="button"
+            onClick={onVoltar}
+            className="text-xs font-semibold text-slate-400 transition hover:text-sky-300"
+          >
+            ← Voltar ao menu
+          </button>
+        </div>
 
-        <span className="mt-4 inline-flex rounded-full bg-sky-500/15 px-3 py-1 text-xs font-semibold text-sky-300">
+        <span className="flex w-fit rounded-full bg-sky-500/15 px-3 py-1 text-xs font-semibold text-sky-300">
           Quiz relâmpago
         </span>
 
@@ -72,7 +74,7 @@ export default function ConfigurarQuiz({
               maxLength={30}
               placeholder="Ex.: Ana Souza"
               autoComplete="off"
-              className="w-full rounded-xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-sky-400 focus:ring-2 focus:ring-sky-400/30"
+              className="w-full rounded-xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-sky-400 focus:ring-2 focus:ring-sky-400/30"
             />
           </div>
 
