@@ -61,8 +61,9 @@ código. Use como roteiro de apresentação.
 | Conceito | Onde está |
 | --- | --- |
 | Componentes | `web/src/components/` |
-| Estado | `useState` em `App.jsx`, `Quiz.jsx` e `Home.jsx` |
-| Efeitos | contagem regressiva e atalhos de teclado em `Quiz.jsx` |
+| Menu de cards | `Home.jsx` com os modos Quiz, Caça ao Bug e Ranking |
+| Estado | `useState` em `App.jsx`, `Quiz.jsx`, `CacaBug.jsx` e `ConfigurarQuiz.jsx` |
+| Efeitos | contagem regressiva e atalhos de teclado em `Quiz.jsx` e `CacaBug.jsx` |
 | Chamadas HTTP | `web/src/lib/api.js` |
 | Estilização | classes Tailwind em todos os componentes |
 | Build | `vite.config.js` e `npm run build` |
@@ -101,11 +102,29 @@ código. Use como roteiro de apresentação.
 O modo arcade é uma alternativa visual ao quiz web, pensada para o telão da
 apresentação. Ele usa as mesmas perguntas e regras do jogo principal.
 
-## 10. Roteiro de apresentação (5 minutos)
+## 10. Caça ao Bug (segundo modo de jogo)
+
+| Conceito | Onde está |
+| --- | --- |
+| Modelo de domínio | `Desafio` em `core/models.py` |
+| Dados | `data/desafios.json` (12 desafios) |
+| Persistência | `carregar_desafios` / `adicionar_desafio` em `core/storage.py` |
+| Regras | `responder_desafio` em `core/services.py` |
+| Rotas | `GET /api/desafios` e `POST /api/desafios/{id}/responder` |
+| Tela | `web/src/components/CacaBug.jsx` |
+| Menu | cards em `web/src/components/Home.jsx` |
+| Testes | `TestDesafio` no núcleo e casos em `backend/test_main.py` |
+
+Esse modo reaproveita a mesma arquitetura do quiz: o `core/` valida as regras,
+o Flask expõe JSON e o React apenas apresenta. A correção e a explicação só
+aparecem **depois** da resposta, igual ao quiz.
+
+## 11. Roteiro de apresentação (5 minutos)
 
 1. Abrir o painel Tkinter e mostrar o cadastro de pergunta.
 2. Iniciar uma partida no painel e explicar a pontuação.
-3. Abrir a web, jogar uma partida curta e mostrar a explicação e a revisão.
-4. Mostrar o ranking agregado.
-5. Mostrar os testes rodando e o pipeline no GitHub Actions.
-6. Fechar com a arquitetura: `core/` compartilhado por Flask e Tkinter.
+3. Abrir a web e mostrar o menu de cards (Quiz, Caça ao Bug, Ranking).
+4. Jogar uma partida curta e mostrar a explicação e a revisão.
+5. Abrir o Caça ao Bug e resolver um desafio de código.
+6. Mostrar o ranking agregado, os testes rodando e o pipeline no GitHub Actions.
+7. Fechar com a arquitetura: `core/` compartilhado por Flask, Tkinter e arcade.

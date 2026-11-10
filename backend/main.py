@@ -20,7 +20,7 @@ RAIZ_PROJETO = Path(__file__).resolve().parent.parent
 if str(RAIZ_PROJETO) not in sys.path:
     sys.path.insert(0, str(RAIZ_PROJETO))
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 
 from core.models import CATEGORIAS_PADRAO, DIFICULDADES, ConflitoDeResposta
 from core.services import QuizService
@@ -28,6 +28,10 @@ from core.services import QuizService
 app = Flask(__name__)
 app.json.ensure_ascii = False
 service = QuizService()
+
+# Front-end React compilado. Quando existe, o próprio Flask entrega o app web,
+# então `python main.py` sobe tudo em uma única porta/processo.
+DIST_WEB = RAIZ_PROJETO / "web" / "dist"
 
 ORIGENS_PADRAO = "http://localhost:5173,http://127.0.0.1:5173"
 
@@ -103,6 +107,9 @@ def documentacao():
         ("GET", "/api/categorias", "Lista as categorias disponíveis"),
         ("GET", "/api/perguntas", "Lista perguntas sem revelar a correta"),
         ("POST", "/api/perguntas", "Cadastra uma pergunta (opcionalmente com token)"),
+        ("GET", "/api/desafios", "Lista os desafios do Caça ao Bug"),
+        ("POST", "/api/desafios", "Cadastra um desafio (opcionalmente com token)"),
+        ("POST", "/api/desafios/{id}/responder", "Corrige uma resposta do Caça ao Bug"),
         ("POST", "/api/partidas", "Inicia uma partida"),
         ("GET", "/api/partidas/{id}", "Consulta o estado da partida"),
         ("POST", "/api/partidas/{id}/responder", "Responde a pergunta atual"),
@@ -208,6 +215,110 @@ def criar_pergunta():
     return jsonify(pergunta.para_dict()), 201
 
 
+@app.get("/api/desafios")
+def listar_desafios():
+    return jsonify(service.listar_desafios(publico=True))
+
+
+@app.get("/api/desafios/<desafio_id>")
+def obter_desafio(desafio_id: str):
+    try:
+        desafio = service.obter_desafio(desafio_id)
+    except KeyError:
+        return _erro("Desafio não encontrado.", 404)
+    return jsonify(desafio.para_publico())
+
+
+@app.post("/api/desafios")
+def criar_desafio():
+    bloqueio = _validar_admin()
+    if bloqueio:
+        return bloqueio
+
+    dados = _corpo_json()
+
+    titulo = dados.get("titulo")
+    if not isinstance(titulo, str) or len(titulo.strip()) < 3:
+        return _erro("O título precisa ter pelo menos 3 caracteres.", 422)
+
+    codigo = dados.get("codigo")
+    if not isinstance(codigo, str) or not codigo.strip():
+        return _erro("O trecho de código é obrigatório.", 422)
+
+    descricao = dados.get("descricao")
+    if not isinstance(descricao, str) or len(descricao.strip()) < 5:
+        return _erro("A descrição precisa ter pelo menos 5 caracteres.", 422)
+
+    alternativas = dados.get("alternativas")
+    if not isinstance(alternativas, list) or len(alternativas) < 2:
+        return _erro("O desafio precisa de pelo menos 2 alternativas.", 422)
+    if not all(isinstance(item, str) and item.strip() for item in alternativas):
+        return _erro("Todas as alternativas precisam ser textos não vazios.", 422)
+
+    correta = dados.get("correta")
+    if not _inteiro(correta):
+        return _erro("O índice da alternativa correta precisa ser um inteiro.", 422)
+    if not 0 <= correta < len(alternativas):
+        return _erro("O índice da alternativa correta é inválido.", 400)
+
+    linguagem = dados.get("linguagem", "Código")
+    if not isinstance(linguagem, str) or not linguagem.strip():
+        return _erro("A linguagem precisa ser um texto não vazio.", 422)
+
+    tema = dados.get("tema", "Geral")
+    if not isinstance(tema, str) or not tema.strip():
+        return _erro("O tema precisa ser um texto não vazio.", 422)
+
+    explicacao = dados.get("explicacao", "")
+    if not isinstance(explicacao, str):
+        return _erro("A explicação precisa ser um texto.", 422)
+
+    try:
+        desafio = service.criar_desafio(
+            {
+                "titulo": titulo,
+                "linguagem": linguagem.strip(),
+                "tema": tema.strip(),
+                "codigo": codigo,
+                "descricao": descricao,
+                "alternativas": alternativas,
+                "correta": correta,
+                "explicacao": explicacao,
+            }
+        )
+    except ValueError as erro:
+        return _erro(str(erro), 400)
+
+    return jsonify(desafio.para_dict()), 201
+
+
+@app.post("/api/desafios/<desafio_id>/responder")
+def responder_desafio(desafio_id: str):
+    dados = _corpo_json()
+
+    alternativa = dados.get("alternativa")
+    if not _inteiro(alternativa) or alternativa < 0:
+        return _erro("A alternativa precisa ser um inteiro maior ou igual a zero.", 422)
+
+    try:
+        desafio, correta, pontos = service.responder_desafio(desafio_id, alternativa)
+    except KeyError:
+        return _erro("Desafio não encontrado.", 404)
+    except ValueError as erro:
+        return _erro(str(erro), 400)
+
+    return jsonify(
+        {
+            "correta": correta,
+            "alternativa_escolhida": alternativa,
+            "alternativa_correta": desafio.correta,
+            "pontos": pontos,
+            "explicacao": desafio.explicacao,
+            "desafio": desafio.para_publico(revelar=True),
+        }
+    )
+
+
 @app.post("/api/partidas")
 def iniciar_partida():
     dados = _corpo_json()
@@ -306,7 +417,42 @@ def ranking():
     return jsonify(service.ranking(limite=max(1, min(limite, 100))))
 
 
+@app.get("/")
+@app.get("/<path:caminho>")
+def servir_web(caminho: str = ""):
+    """Entrega o front-end React compilado (`web/dist`) junto com a API.
+
+    Dessa forma `python main.py` abre a web completa em
+    http://127.0.0.1:8000 sem precisar de um segundo servidor (Vite). Rotas de
+    API inexistentes continuam respondendo JSON 404.
+    """
+    if caminho == "api" or caminho.startswith("api/"):
+        return _erro("Rota não encontrada.", 404)
+
+    if DIST_WEB.is_dir():
+        raiz_dist = DIST_WEB.resolve()
+        alvo = (DIST_WEB / caminho).resolve()
+        dentro = alvo == raiz_dist or raiz_dist in alvo.parents
+
+        if caminho and dentro and alvo.is_file():
+            return send_from_directory(DIST_WEB, caminho)
+
+        # Um arquivo com extensão que não existe deve ser 404 (ex.: favicon).
+        if caminho and "." in Path(caminho).name:
+            return _erro("Arquivo não encontrado.", 404)
+
+        if (DIST_WEB / "index.html").is_file():
+            return send_from_directory(DIST_WEB, "index.html")
+
+    return _erro(
+        "Front-end não compilado. Rode 'npm install' e 'npm run build' dentro de web/.",
+        404,
+    )
+
+
 if __name__ == "__main__":
     porta = int(os.getenv("PORT", "8000"))
     host = os.getenv("HOST", "127.0.0.1")
-    app.run(host=host, port=porta, debug=True)
+    # use_reloader=False mantém um único processo: fechar o terminal encerra o
+    # servidor de verdade (o reloader deixava um processo filho na porta 8000).
+    app.run(host=host, port=porta, debug=False, use_reloader=False)

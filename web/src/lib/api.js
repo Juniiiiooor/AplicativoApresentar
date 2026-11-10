@@ -55,4 +55,12 @@ export const api = {
     }),
 
   ranking: (limite = 10) => request(`/api/ranking?limite=${limite}`),
+
+  desafios: () => request("/api/desafios"),
+
+  responderDesafio: (desafioId, alternativa) =>
+    request(`/api/desafios/${desafioId}/responder`, {
+      method: "POST",
+      body: JSON.stringify({ alternativa }),
+    }),
 };

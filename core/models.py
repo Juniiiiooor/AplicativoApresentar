@@ -119,6 +119,97 @@ class Pergunta:
         )
 
 
+PONTOS_DESAFIO = 10
+
+
+@dataclass
+class Desafio:
+    """Um trecho de código com um bug e as possíveis correções.
+
+    Usado pelo modo "Caça ao Bug": o jogador lê o código, identifica o
+    problema e escolhe a correção certa.
+    """
+
+    id: str
+    titulo: str
+    linguagem: str
+    tema: str
+    codigo: str
+    descricao: str
+    alternativas: list[str]
+    correta: int
+    explicacao: str = ""
+
+    def __post_init__(self) -> None:
+        self.titulo = self.titulo.strip()
+        self.linguagem = self.linguagem.strip() or "Código"
+        self.tema = self.tema.strip() or "Geral"
+        self.descricao = self.descricao.strip()
+        self.alternativas = [alternativa.strip() for alternativa in self.alternativas]
+        self.explicacao = self.explicacao.strip()
+
+        if len(self.titulo) < 3:
+            raise ValueError("O título do desafio precisa ter pelo menos 3 caracteres.")
+        if not self.codigo.strip():
+            raise ValueError("O desafio precisa de um trecho de código.")
+        if len(self.descricao) < 5:
+            raise ValueError("A descrição precisa ter pelo menos 5 caracteres.")
+        if len(self.alternativas) < 2:
+            raise ValueError("O desafio precisa de pelo menos 2 alternativas.")
+        if not 0 <= self.correta < len(self.alternativas):
+            raise ValueError("O índice da alternativa correta é inválido.")
+
+    def esta_correta(self, alternativa: int) -> bool:
+        return alternativa == self.correta
+
+    def pontos(self, alternativa: int) -> int:
+        return PONTOS_DESAFIO if self.esta_correta(alternativa) else 0
+
+    def para_publico(self, revelar: bool = False) -> dict[str, Any]:
+        """Versão sem a resposta correta, segura para enviar ao jogador."""
+        dados = {
+            "id": self.id,
+            "titulo": self.titulo,
+            "linguagem": self.linguagem,
+            "tema": self.tema,
+            "codigo": self.codigo,
+            "descricao": self.descricao,
+            "alternativas": list(self.alternativas),
+        }
+        if revelar:
+            dados["correta"] = self.correta
+            if self.explicacao:
+                dados["explicacao"] = self.explicacao
+        return dados
+
+    def para_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "titulo": self.titulo,
+            "linguagem": self.linguagem,
+            "tema": self.tema,
+            "codigo": self.codigo,
+            "descricao": self.descricao,
+            "alternativas": list(self.alternativas),
+            "correta": self.correta,
+            "explicacao": self.explicacao,
+        }
+
+    @classmethod
+    def de_dict(cls, dados: dict[str, Any]) -> "Desafio":
+        return cls(
+            id=str(dados.get("id") or uuid4().hex[:8]),
+            titulo=dados["titulo"],
+            linguagem=dados.get("linguagem", "Código"),
+            tema=dados.get("tema", "Geral"),
+            codigo=dados["codigo"],
+            descricao=dados["descricao"],
+            alternativas=list(dados["alternativas"]),
+            correta=int(dados["correta"]),
+            explicacao=str(dados.get("explicacao") or ""),
+        )
+
+
 @dataclass
 class Jogador:
     """Representa quem está jogando e acumula a pontuação da partida."""
