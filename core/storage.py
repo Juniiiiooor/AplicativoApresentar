@@ -46,13 +46,19 @@ class RepositorioJSON:
         self._garantir_arquivos()
 
     def _garantir_arquivos(self) -> None:
-        for arquivo in (
-            self.arquivo_perguntas,
-            self.arquivo_desafios,
-            self.arquivo_ranking,
-        ):
+        from . import dados_iniciais
+
+        padroes = {
+            self.arquivo_perguntas: dados_iniciais.PERGUNTAS_PADRAO,
+            self.arquivo_desafios: dados_iniciais.DESAFIOS_PADRAO,
+            self.arquivo_ranking: [],
+        }
+        for arquivo, padrao in padroes.items():
             if not arquivo.exists():
-                arquivo.write_text("[]", encoding="utf-8")
+                arquivo.write_text(
+                    json.dumps(padrao, ensure_ascii=False, indent=2),
+                    encoding="utf-8",
+                )
 
     def _ler(self, caminho: Path, padrao: Any) -> Any:
         try:

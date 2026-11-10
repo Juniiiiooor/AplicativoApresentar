@@ -50,7 +50,8 @@ Pacote leve, para máquinas que já têm Python 3.11+ com Tkinter.
 > PyInstaller gera **falso positivo** no Windows Defender.
 
 O app abre offline com os modos **Quiz relâmpago**, **Caça ao Bug** e **Ranking**.
-O ranking fica salvo em `data/ranking.json`.
+Na primeira execução, a pasta `data/` é criada automaticamente com as perguntas,
+os desafios e o ranking.
 
 Para rodar a versão web, use o `python main.py` explicado mais abaixo.
 
