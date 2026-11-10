@@ -25,17 +25,30 @@ pontos e mostra uma explicação depois da resposta.
 
 ## ⬇️ Baixar o aplicativo (Windows)
 
-Se você só quer jogar no Windows, sem instalar Python nem abrir o navegador:
+### Opção 1 — pacote sem `.exe` (recomendado)
+
+Não é sinalizado pelo antivírus. Requer Python 3.11+ instalado (o instalador
+oficial do python.org já inclui o Tkinter).
+
+1. Baixe **[Quiz-Arena-Codigo.zip](https://github.com/Juniiiiooor/Quiz--e--bug/raw/main/downloads/Quiz-Arena-Codigo.zip)**.
+2. Extraia a pasta.
+3. Dê duplo clique em **`Quiz Arena.bat`**.
+
+### Opção 2 — executável pronto
+
+Não precisa instalar Python, mas o `.exe` **não é assinado digitalmente** e
+alguns antivírus (incluindo o Windows Defender) podem acusar um **falso
+positivo** gerado pelo PyInstaller.
 
 1. Baixe **[Quiz-Arena-Windows.zip](https://github.com/Juniiiiooor/Quiz--e--bug/raw/main/downloads/Quiz-Arena-Windows.zip)**.
 2. Extraia a pasta.
 3. Dê duplo clique em **`Quiz Arena.exe`**.
 
-O app abre offline com os modos **Quiz relâmpago**, **Caça ao Bug** e **Ranking**.
-O ranking fica salvo em `data/ranking.json`, ao lado do `.exe`.
+> Se o Windows bloquear, clique em **Mais informações → Executar assim mesmo**.
+> Se o antivírus colocar em quarentena, use a **Opção 1**.
 
-> Se o Windows exibir o aviso do SmartScreen, clique em **Mais informações →
-> Executar assim mesmo**. O executável não é assinado digitalmente.
+O app abre offline com os modos **Quiz relâmpago**, **Caça ao Bug** e **Ranking**.
+O ranking fica salvo em `data/ranking.json`.
 
 Para rodar a versão web, use o `python main.py` explicado mais abaixo.
 
