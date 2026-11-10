@@ -33,8 +33,8 @@ from core.services import QuizService
 COR_FUNDO = "#0f172a"
 COR_PAINEL = "#1e293b"
 COR_PAINEL_ESCURO = "#0b1220"
-COR_TEXTO = "#e2e8f0"
-COR_TEXTO_FRACO = "#94a3b8"
+COR_TEXTO = "#f1f5f9"
+COR_TEXTO_FRACO = "#cbd5e1"
 COR_DESTAQUE = "#38bdf8"
 COR_SUCESSO = "#22c55e"
 COR_ERRO = "#f87171"
@@ -91,15 +91,15 @@ class AplicacaoArena(tk.Tk):
             "TLabel",
             background=COR_FUNDO,
             foreground=COR_TEXTO,
-            font=("Segoe UI", 10),
+            font=("Segoe UI", 11),
         )
         estilo.configure(
             "TButton",
             background="#334155",
             foreground=COR_TEXTO,
             borderwidth=0,
-            padding=(12, 8),
-            font=("Segoe UI", 10, "bold"),
+            padding=(14, 10),
+            font=("Segoe UI", 11, "bold"),
         )
         estilo.map("TButton", background=[("active", "#475569")])
         estilo.configure(
@@ -120,7 +120,8 @@ class AplicacaoArena(tk.Tk):
             foreground=COR_TEXTO,
             insertcolor=COR_TEXTO,
             borderwidth=0,
-            padding=6,
+            padding=8,
+            font=("Segoe UI", 11),
         )
         estilo.configure(
             "TCombobox",
@@ -129,7 +130,8 @@ class AplicacaoArena(tk.Tk):
             foreground=COR_TEXTO,
             arrowcolor=COR_TEXTO,
             borderwidth=0,
-            padding=5,
+            padding=6,
+            font=("Segoe UI", 11),
         )
         estilo.configure(
             "TSpinbox",
@@ -137,22 +139,24 @@ class AplicacaoArena(tk.Tk):
             foreground=COR_TEXTO,
             arrowcolor=COR_TEXTO,
             borderwidth=0,
-            padding=5,
+            padding=6,
+            font=("Segoe UI", 11),
         )
         estilo.configure(
             "Treeview",
             background=COR_PAINEL_ESCURO,
             fieldbackground=COR_PAINEL_ESCURO,
             foreground=COR_TEXTO,
-            rowheight=28,
+            rowheight=32,
             borderwidth=0,
+            font=("Segoe UI", 11),
         )
         estilo.configure(
             "Treeview.Heading",
             background="#334155",
             foreground=COR_TEXTO,
-            font=("Segoe UI", 9, "bold"),
-            padding=5,
+            font=("Segoe UI", 10, "bold"),
+            padding=6,
         )
         estilo.map("Treeview", background=[("selected", "#0369a1")])
 
@@ -189,14 +193,14 @@ class AplicacaoArena(tk.Tk):
             text="QUIZ ARENA",
             bg=COR_FUNDO,
             fg=COR_DESTAQUE,
-            font=("Segoe UI", 9, "bold"),
+            font=("Segoe UI", 10, "bold"),
         ).pack(anchor="w")
         tk.Label(
             esquerda,
             text=subtitulo,
             bg=COR_FUNDO,
             fg=COR_TEXTO,
-            font=("Segoe UI", 18, "bold"),
+            font=("Segoe UI", 20, "bold"),
         ).pack(anchor="w")
 
         if voltar is not None:
@@ -218,14 +222,14 @@ class AplicacaoArena(tk.Tk):
             text="Escolha um modo",
             bg=COR_FUNDO,
             fg=COR_DESTAQUE,
-            font=("Segoe UI", 9, "bold"),
+            font=("Segoe UI", 10, "bold"),
         ).pack(anchor="center", pady=(6, 2))
         tk.Label(
             wrapper,
             text="Duas formas de treinar o que você aprendeu.",
             bg=COR_FUNDO,
             fg=COR_TEXTO,
-            font=("Segoe UI", 22, "bold"),
+            font=("Segoe UI", 24, "bold"),
         ).pack(anchor="center")
         tk.Label(
             wrapper,
@@ -235,8 +239,8 @@ class AplicacaoArena(tk.Tk):
             ),
             bg=COR_FUNDO,
             fg=COR_TEXTO_FRACO,
-            font=("Segoe UI", 10),
-            wraplength=760,
+            font=("Segoe UI", 12),
+            wraplength=820,
             justify="center",
         ).pack(anchor="center", pady=(6, 24))
 
@@ -287,8 +291,8 @@ class AplicacaoArena(tk.Tk):
                 "arcade. Nenhum servidor é necessário."
             ),
             bg=COR_FUNDO,
-            fg="#64748b",
-            font=("Segoe UI", 9),
+            fg="#94a3b8",
+            font=("Segoe UI", 10),
         ).pack(anchor="center", pady=(18, 0))
 
     def _criar_card(
@@ -330,7 +334,7 @@ class AplicacaoArena(tk.Tk):
             text=titulo.upper(),
             bg=COR_PAINEL,
             fg=cor,
-            font=("Segoe UI", 10, "bold"),
+            font=("Segoe UI", 12, "bold"),
         )
         titulo_lbl.grid(row=1, column=0, sticky="w", pady=(8, 4))
 
@@ -339,7 +343,7 @@ class AplicacaoArena(tk.Tk):
             text=descricao,
             bg=COR_PAINEL,
             fg=COR_TEXTO_FRACO,
-            font=("Segoe UI", 10),
+            font=("Segoe UI", 12),
             wraplength=250,
             justify="left",
         )
@@ -349,8 +353,8 @@ class AplicacaoArena(tk.Tk):
             card,
             text=topicos.upper(),
             bg=COR_PAINEL,
-            fg="#64748b",
-            font=("Segoe UI", 8, "bold"),
+            fg="#94a3b8",
+            font=("Segoe UI", 10, "bold"),
         )
         topicos_lbl.grid(row=3, column=0, sticky="w", pady=(10, 12))
 
@@ -379,7 +383,7 @@ class AplicacaoArena(tk.Tk):
             text="Entre na arena e responda antes do tempo acabar.",
             bg=COR_FUNDO,
             fg=COR_TEXTO,
-            font=("Segoe UI", 20, "bold"),
+            font=("Segoe UI", 22, "bold"),
         ).pack(anchor="w")
         tk.Label(
             wrapper,
@@ -389,8 +393,8 @@ class AplicacaoArena(tk.Tk):
             ),
             bg=COR_FUNDO,
             fg=COR_TEXTO_FRACO,
-            font=("Segoe UI", 10),
-            wraplength=820,
+            font=("Segoe UI", 12),
+            wraplength=860,
             justify="left",
         ).pack(anchor="w", pady=(6, 20))
 
@@ -409,7 +413,7 @@ class AplicacaoArena(tk.Tk):
             text="Seu nome",
             bg=COR_PAINEL,
             fg=COR_TEXTO,
-            font=("Segoe UI", 10, "bold"),
+            font=("Segoe UI", 11, "bold"),
         ).grid(row=0, column=0, columnspan=4, sticky="w")
         self.entrada_nome = ttk.Entry(formulario, width=40)
         self.entrada_nome.grid(row=1, column=0, columnspan=4, sticky="ew", pady=(4, 16))
@@ -456,7 +460,7 @@ class AplicacaoArena(tk.Tk):
             text=rotulo,
             bg=COR_PAINEL,
             fg=COR_TEXTO,
-            font=("Segoe UI", 10, "bold"),
+            font=("Segoe UI", 11, "bold"),
         ).grid(row=2, column=coluna, sticky="w", padx=(0, 14))
         combo = ttk.Combobox(parent, values=valores, state="readonly", width=18)
         combo.grid(row=3, column=coluna, sticky="w", padx=(0, 14))
@@ -523,7 +527,7 @@ class AplicacaoArena(tk.Tk):
             text="",
             bg=COR_FUNDO,
             fg=COR_DESTAQUE,
-            font=("Segoe UI", 10, "bold"),
+            font=("Segoe UI", 11, "bold"),
         )
         self.lbl_progresso_quiz.pack(side="left")
         self.lbl_tempo_quiz = tk.Label(
@@ -531,7 +535,7 @@ class AplicacaoArena(tk.Tk):
             text="",
             bg=COR_FUNDO,
             fg=COR_DESTAQUE,
-            font=("Segoe UI", 13, "bold"),
+            font=("Segoe UI", 15, "bold"),
         )
         self.lbl_tempo_quiz.pack(side="right")
         ttk.Button(topo, text="Sair", command=self.mostrar_home).pack(
@@ -553,8 +557,8 @@ class AplicacaoArena(tk.Tk):
             text="",
             bg=COR_PAINEL,
             fg=COR_TEXTO,
-            font=("Segoe UI", 17, "bold"),
-            wraplength=900,
+            font=("Segoe UI", 19, "bold"),
+            wraplength=940,
             justify="left",
             anchor="w",
         )
@@ -569,8 +573,8 @@ class AplicacaoArena(tk.Tk):
             text="",
             bg=COR_PAINEL,
             fg=COR_TEXTO,
-            font=("Segoe UI", 11, "bold"),
-            wraplength=900,
+            font=("Segoe UI", 12, "bold"),
+            wraplength=940,
             justify="left",
             anchor="w",
         )
@@ -581,7 +585,7 @@ class AplicacaoArena(tk.Tk):
             text="",
             bg=COR_PAINEL,
             fg=COR_TEXTO_FRACO,
-            font=("Segoe UI", 9),
+            font=("Segoe UI", 11),
             anchor="w",
         )
         self.lbl_placar_quiz.pack(fill="x", anchor="w", pady=(0, 12))
@@ -634,10 +638,10 @@ class AplicacaoArena(tk.Tk):
                 activebackground=COR_PAINEL,
                 activeforeground=COR_DESTAQUE,
                 selectcolor=COR_PAINEL_ESCURO,
-                font=("Segoe UI", 11),
+                font=("Segoe UI", 12),
                 anchor="w",
                 justify="left",
-                wraplength=880,
+                wraplength=920,
                 padx=6,
                 pady=4,
                 borderwidth=0,
@@ -752,7 +756,7 @@ class AplicacaoArena(tk.Tk):
             text=f"🏁 Fim de jogo, {jogador.nome}!",
             bg=COR_FUNDO,
             fg=COR_TEXTO,
-            font=("Segoe UI", 22, "bold"),
+            font=("Segoe UI", 24, "bold"),
         ).pack(anchor="w")
 
         resumo = tk.Frame(wrapper, bg=COR_FUNDO)
@@ -776,14 +780,14 @@ class AplicacaoArena(tk.Tk):
                 text=rotulo.upper(),
                 bg=COR_PAINEL,
                 fg=COR_TEXTO_FRACO,
-                font=("Segoe UI", 8, "bold"),
+                font=("Segoe UI", 10, "bold"),
             ).pack(anchor="w")
             tk.Label(
                 bloco,
                 text=valor,
                 bg=COR_PAINEL,
                 fg=cor,
-                font=("Segoe UI", 22, "bold"),
+                font=("Segoe UI", 24, "bold"),
             ).pack(anchor="w")
 
         tk.Label(
@@ -791,7 +795,7 @@ class AplicacaoArena(tk.Tk):
             text="Revisão das respostas",
             bg=COR_FUNDO,
             fg=COR_TEXTO,
-            font=("Segoe UI", 12, "bold"),
+            font=("Segoe UI", 14, "bold"),
         ).pack(anchor="w", pady=(0, 8))
 
         area = tk.Frame(wrapper, bg=COR_PAINEL_ESCURO)
@@ -801,7 +805,7 @@ class AplicacaoArena(tk.Tk):
             bg=COR_PAINEL_ESCURO,
             fg=COR_TEXTO,
             insertbackground=COR_TEXTO,
-            font=("Segoe UI", 10),
+            font=("Segoe UI", 12),
             wrap="word",
             padx=14,
             pady=12,
@@ -885,7 +889,7 @@ class AplicacaoArena(tk.Tk):
             text="",
             bg=COR_FUNDO,
             fg=COR_CARD_BUG,
-            font=("Segoe UI", 10, "bold"),
+            font=("Segoe UI", 11, "bold"),
         )
         self.lbl_progresso_bug.pack(side="left")
         self.lbl_placar_bug = tk.Label(
@@ -893,7 +897,7 @@ class AplicacaoArena(tk.Tk):
             text="",
             bg=COR_FUNDO,
             fg=COR_CARD_BUG,
-            font=("Segoe UI", 12, "bold"),
+            font=("Segoe UI", 14, "bold"),
         )
         self.lbl_placar_bug.pack(side="right")
         ttk.Button(topo, text="Sair", command=self.mostrar_home).pack(
@@ -915,7 +919,7 @@ class AplicacaoArena(tk.Tk):
             text="",
             bg=COR_PAINEL,
             fg=COR_TEXTO,
-            font=("Segoe UI", 16, "bold"),
+            font=("Segoe UI", 18, "bold"),
             anchor="w",
             justify="left",
         )
@@ -926,7 +930,7 @@ class AplicacaoArena(tk.Tk):
             text="",
             bg=COR_PAINEL,
             fg=COR_TEXTO_FRACO,
-            font=("Segoe UI", 9, "bold"),
+            font=("Segoe UI", 11, "bold"),
             anchor="w",
         )
         self.lbl_meta_bug.pack(fill="x", anchor="w", pady=(2, 10))
@@ -936,7 +940,7 @@ class AplicacaoArena(tk.Tk):
             bg=COR_PAINEL_ESCURO,
             fg="#a7f3d0",
             insertbackground="#a7f3d0",
-            font=("Consolas", 10),
+            font=("Consolas", 12),
             wrap="word",
             height=7,
             padx=12,
@@ -951,8 +955,8 @@ class AplicacaoArena(tk.Tk):
             text="",
             bg=COR_PAINEL,
             fg=COR_TEXTO,
-            font=("Segoe UI", 11),
-            wraplength=900,
+            font=("Segoe UI", 12),
+            wraplength=940,
             justify="left",
             anchor="w",
         )
@@ -967,8 +971,8 @@ class AplicacaoArena(tk.Tk):
             text="",
             bg=COR_PAINEL,
             fg=COR_TEXTO,
-            font=("Segoe UI", 11, "bold"),
-            wraplength=900,
+            font=("Segoe UI", 12, "bold"),
+            wraplength=940,
             justify="left",
             anchor="w",
         )
@@ -1026,10 +1030,10 @@ class AplicacaoArena(tk.Tk):
                 activebackground=COR_PAINEL,
                 activeforeground=COR_CARD_BUG,
                 selectcolor=COR_PAINEL_ESCURO,
-                font=("Segoe UI", 11),
+                font=("Segoe UI", 12),
                 anchor="w",
                 justify="left",
-                wraplength=880,
+                wraplength=920,
                 padx=6,
                 pady=4,
                 borderwidth=0,
@@ -1112,7 +1116,7 @@ class AplicacaoArena(tk.Tk):
             text=f"{self.acertos_desafio} de {total} bugs encontrados!",
             bg=COR_FUNDO,
             fg=COR_TEXTO,
-            font=("Segoe UI", 22, "bold"),
+            font=("Segoe UI", 24, "bold"),
         ).pack(anchor="w", pady=(4, 18))
 
         resumo = tk.Frame(wrapper, bg=COR_FUNDO)
@@ -1136,14 +1140,14 @@ class AplicacaoArena(tk.Tk):
                 text=rotulo.upper(),
                 bg=COR_PAINEL,
                 fg=COR_TEXTO_FRACO,
-                font=("Segoe UI", 8, "bold"),
+                font=("Segoe UI", 10, "bold"),
             ).pack(anchor="w")
             tk.Label(
                 bloco,
                 text=valor,
                 bg=COR_PAINEL,
                 fg=cor,
-                font=("Segoe UI", 22, "bold"),
+                font=("Segoe UI", 24, "bold"),
             ).pack(anchor="w")
 
         acoes = tk.Frame(wrapper, bg=COR_FUNDO)
@@ -1172,7 +1176,7 @@ class AplicacaoArena(tk.Tk):
             text="Melhores partidas por jogador",
             bg=COR_FUNDO,
             fg=COR_TEXTO_FRACO,
-            font=("Segoe UI", 10),
+            font=("Segoe UI", 12),
         ).pack(anchor="w", pady=(0, 12))
 
         area = tk.Frame(wrapper, bg=COR_FUNDO)

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import threading
 from pathlib import Path
 from typing import Any
@@ -15,7 +16,21 @@ from typing import Any
 from .models import Desafio, Jogador, Pergunta
 
 RAIZ_PROJETO = Path(__file__).resolve().parent.parent
-DIR_DADOS_PADRAO = RAIZ_PROJETO / "data"
+
+
+def _diretorio_dados_padrao() -> Path:
+    """Pasta de dados gravável.
+
+    Na execução normal usa ``data/`` na raiz do projeto. No executável
+    empacotado (PyInstaller) usa ``data/`` ao lado do .exe, para que o
+    ranking continue salvo entre uma execução e outra.
+    """
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent / "data"
+    return RAIZ_PROJETO / "data"
+
+
+DIR_DADOS_PADRAO = _diretorio_dados_padrao()
 
 
 class RepositorioJSON:

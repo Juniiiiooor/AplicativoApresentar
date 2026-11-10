@@ -23,6 +23,24 @@ pontos e mostra uma explicação depois da resposta.
 
 ---
 
+## ⬇️ Baixar o aplicativo (Windows)
+
+Se você só quer jogar no Windows, sem instalar Python nem abrir o navegador:
+
+1. Baixe **[Quiz-Arena-Windows.zip](downloads/Quiz-Arena-Windows.zip)**.
+2. Extraia a pasta.
+3. Dê duplo clique em **`Quiz Arena.exe`**.
+
+O app abre offline com os modos **Quiz relâmpago**, **Caça ao Bug** e **Ranking**.
+O ranking fica salvo em `data/ranking.json`, ao lado do `.exe`.
+
+> Se o Windows exibir o aviso do SmartScreen, clique em **Mais informações →
+> Executar assim mesmo**. O executável não é assinado digitalmente.
+
+Para rodar a versão web, use o `python main.py` explicado mais abaixo.
+
+---
+
 ## ✅ O que já funciona
 
 - [x] Regras de domínio em POO (`Pergunta`, `Jogador`, `Partida`, `Resposta`)
